@@ -74,28 +74,19 @@
       </div>
     </el-dialog>
 
-    <!-- AI推荐弹窗 -->
-    <AiRecommendPopup
-      :visible.sync="aiPopupVisible"
-      :food="aiRecommendFood"
-      :reason="aiRecommendReason"
-      @accept="acceptAiRecommend"
-    />
-
     <!-- AI聊天助手 -->
-    <AiChatWidget :allFoods="foods" />
+    <AiChatWidget ref="aiChat" :allFoods="foods" />
     </div>
   </div>
 </template>
 
 <script>
 import { mapState, mapGetters } from 'vuex'
-import AiRecommendPopup from '@/components/AiRecommendPopup.vue'
 import AiChatWidget from '@/components/AiChatWidget.vue'
 
 export default {
   name: 'Home',
-  components: { AiRecommendPopup, AiChatWidget },
+  components: { AiChatWidget },
   data() {
     return {
       searchKeyword: '',
@@ -107,9 +98,6 @@ export default {
       loading: false,
       showHotRank: false,
       // AI推荐相关
-      aiPopupVisible: false,
-      aiRecommendFood: null,
-      aiRecommendReason: '',
       aiLoading: false
     }
   },
@@ -247,35 +235,21 @@ export default {
       if (this.aiLoading) return
 
       this.aiLoading = true
-      // 显示加载中提示
-      const loadingNotify = this.$notify({
-        title: 'AI 助手',
-        message: '正在为您智能搭配中...',
-        iconClass: 'el-icon-loading',
-        duration: 0,
-        position: 'bottom-right',
-        customClass: 'ai-loading-notify'
-      })
       try {
         const cartFoodIds = cart.map(item => item.foodId)
         const { data } = await this.$axios.post('/ai/recommend', {
           currentAddedFoodId: addedFoodId,
           cartFoodIds: cartFoodIds
         })
-        loadingNotify.close()
         if (data.code === 200 && data.data) {
           const recommendId = data.data.recommendFoodId
           const reason = data.data.reason
-          const allFoods = this.foods
-          const found = allFoods.find(f => f.id === recommendId)
-          if (found) {
-            this.aiRecommendFood = found
-            this.aiRecommendReason = reason || '这道菜与您的选择很搭哦！'
-            this.aiPopupVisible = true
+          const found = this.foods.find(f => f.id === recommendId)
+          if (found && this.$refs.aiChat) {
+            this.$refs.aiChat.showRecommend(found, reason)
           }
         }
       } catch (e) {
-        loadingNotify.close()
         console.error('AI推荐请求失败', e)
       } finally {
         this.aiLoading = false

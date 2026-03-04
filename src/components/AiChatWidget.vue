@@ -6,10 +6,34 @@
          @mousedown="startDrag"
          @touchstart.prevent="startDrag"
          @selectstart.prevent>
-      <!-- 气泡提示 -->
+      <!-- 文字气泡提示 -->
       <transition name="bubble-fade">
-        <div class="bubble-tip" v-if="showBubble && !chatOpen" @click="openChat">
+        <div class="bubble-tip" v-if="showBubble && !chatOpen && !recVisible" @click="openChat">
           <span>{{ currentTip }}</span>
+          <div class="bubble-arrow"></div>
+        </div>
+      </transition>
+      <!-- AI推荐气泡卡片 -->
+      <transition name="bubble-fade">
+        <div class="bubble-recommend" v-if="recVisible && !chatOpen">
+          <div class="rec-header">
+            <span class="rec-title">🍽 智味助手推荐</span>
+            <i class="el-icon-close rec-close" @click="dismissRec"></i>
+          </div>
+          <div class="rec-reason">{{ recReason }}</div>
+          <div class="rec-card" v-if="recFood">
+            <img :src="getImageUrl(recFood.image)" class="rec-img" />
+            <div class="rec-info">
+              <div class="rec-name">{{ recFood.name }}</div>
+              <div class="rec-price">¥{{ recFood.price }}</div>
+            </div>
+            <div class="rec-actions">
+              <div class="rec-add" @click="acceptRec">
+                <i class="el-icon-shopping-cart-2"></i> 加购
+              </div>
+              <div class="rec-no" @click="dismissRec">不要</div>
+            </div>
+          </div>
           <div class="bubble-arrow"></div>
         </div>
       </transition>
@@ -123,7 +147,11 @@ export default {
         '点我聊聊，推荐好菜给你！',
         '选择困难？交给AI就好～'
       ],
-      tipIndex: 0
+      tipIndex: 0,
+      // 推荐气泡相关
+      recVisible: false,
+      recFood: null,
+      recReason: ''
     }
   },
   computed: {
@@ -206,6 +234,30 @@ export default {
       this.showBubble = true
       // 5秒后自动消失
       setTimeout(() => { this.showBubble = false }, 5000)
+    },
+
+    // ---- 推荐气泡 ----
+    /** 外部调用：从图标头顶弹出推荐卡片 */
+    showRecommend(food, reason) {
+      this.showBubble = false
+      this.recFood = food
+      this.recReason = reason || '这道菜与您的选择很搭哦！'
+      this.recVisible = true
+    },
+    acceptRec() {
+      if (this.recFood) {
+        this.$store.dispatch('addToCart', {
+          foodId: this.recFood.id,
+          foodName: this.recFood.name,
+          foodImage: this.recFood.image,
+          price: this.recFood.price
+        })
+        this.$message.success(`已将「${this.recFood.name}」加入购物车`)
+      }
+      this.recVisible = false
+    },
+    dismissRec() {
+      this.recVisible = false
     },
 
     // ---- 聊天相关 ----
@@ -325,6 +377,95 @@ export default {
 .bubble-fade-enter-active { animation: bubble-bounce 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
 .bubble-fade-leave-active { transition: opacity 0.3s; }
 .bubble-fade-leave-to { opacity: 0; }
+
+/* AI推荐气泡卡片 */
+.bubble-recommend {
+  position: absolute;
+  bottom: 72px;
+  right: -8px;
+  width: 280px;
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  padding: 14px;
+  animation: bubble-bounce 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.rec-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.rec-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #6366f1;
+}
+.rec-close {
+  cursor: pointer;
+  color: #86868b;
+  font-size: 14px;
+}
+.rec-close:hover { color: #1d1d1f; }
+.rec-reason {
+  font-size: 13px;
+  color: #6366f1;
+  background: rgba(99, 102, 241, 0.06);
+  padding: 6px 10px;
+  border-radius: 8px;
+  border-left: 3px solid #6366f1;
+  margin-bottom: 10px;
+  line-height: 1.4;
+}
+.rec-card {
+  display: flex;
+  align-items: center;
+  background: #f5f3ff;
+  border-radius: 12px;
+  padding: 10px;
+}
+.rec-img {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  object-fit: cover;
+  margin-right: 10px;
+}
+.rec-info { flex: 1; }
+.rec-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1d1d1f;
+}
+.rec-price {
+  font-size: 15px;
+  font-weight: 700;
+  color: #6366f1;
+}
+.rec-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.rec-add {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 20px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.rec-add:hover { opacity: 0.85; }
+.rec-no {
+  font-size: 12px;
+  color: #86868b;
+  text-align: center;
+  cursor: pointer;
+}
+.rec-no:hover { color: #e30000; }
 
 /* 悬浮按钮 */
 .chat-fab {
