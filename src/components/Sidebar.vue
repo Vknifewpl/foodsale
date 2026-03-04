@@ -1,8 +1,8 @@
 <template>
   <el-aside width="240px" class="sidebar">
-    <div class="logo">
-      <i class="el-icon-apple"></i>
-      <span>餐饮管理</span>
+    <div class="logo" @click="$router.push('/admin/stat')" style="cursor: pointer;">
+      <i class="el-icon-data-analysis"></i>
+      <span>数据统计</span>
     </div>
     
     <el-menu
@@ -27,16 +27,6 @@
         <i class="el-icon-document"></i>
         <span slot="title">订单管理</span>
       </el-menu-item>
-      
-      <el-menu-item index="/admin/stat">
-        <i class="el-icon-data-analysis"></i>
-        <span slot="title">数据统计</span>
-      </el-menu-item>
-      
-      <el-menu-item @click="logout" class="logout-item">
-        <i class="el-icon-switch-button"></i>
-        <span slot="title">退出登录</span>
-      </el-menu-item>
     </el-menu>
   </el-aside>
 </template>
@@ -48,20 +38,6 @@ export default {
     activeMenu() {
       const { path } = this.$route
       return path
-    }
-  },
-  methods: {
-    logout() {
-      this.$confirm('确定要退出登录吗？', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        localStorage.removeItem('admin_token')
-        localStorage.removeItem('admin_user')
-        this.$message.success('已退出登录')
-        this.$router.push('/admin/login')
-      })
     }
   }
 }

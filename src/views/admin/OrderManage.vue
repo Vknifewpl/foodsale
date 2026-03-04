@@ -23,7 +23,7 @@
     <div class="page-content" v-loading="loading">
       <el-table :data="orders" stripe style="width: 100%">
         <el-table-column prop="orderNo" label="订单号" width="200"></el-table-column>
-        <el-table-column prop="userId" label="用户ID" width="100"></el-table-column>
+        <el-table-column prop="username" label="用户名称" width="100"></el-table-column>
         <el-table-column prop="totalAmount" label="订单金额" width="120">
           <template slot-scope="scope">¥{{ scope.row.totalAmount }}</template>
         </el-table-column>
@@ -51,7 +51,7 @@
               size="mini" 
               type="primary" 
               @click="updateOrderStatus(scope.row)" 
-              :disabled="scope.row.status !== 1"
+              v-if="scope.row.status === 1"
             >
               完成订单
             </el-button>
@@ -81,8 +81,8 @@
             <span class="value">{{ currentOrder.orderNo }}</span>
           </div>
           <div class="info-row">
-            <span class="label">用户ID:</span>
-            <span class="value">{{ currentOrder.userId }}</span>
+            <span class="label">用户名称:</span>
+            <span class="value">{{ currentOrder.username }}</span>
           </div>
           <div class="info-row">
             <span class="label">订单状态:</span>

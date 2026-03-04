@@ -25,11 +25,11 @@
           </template>
         </el-table-column>
         <el-table-column prop="categoryName" label="分类" width="120"></el-table-column>
-        <el-table-column prop="price" label="价格" width="100">
+        <el-table-column prop="price" label="价格" width="100" sortable>
           <template slot-scope="scope">¥{{ scope.row.price }}</template>
         </el-table-column>
-        <el-table-column prop="orderCount" label="销量" width="100"></el-table-column>
-        <el-table-column prop="praiseCount" label="好评数" width="100"></el-table-column>
+        <el-table-column prop="orderCount" label="销量" width="100" sortable></el-table-column>
+        <el-table-column prop="praiseCount" label="好评数" width="100" sortable></el-table-column>
         <el-table-column label="操作" width="200">
           <template slot-scope="scope">
             <el-button size="mini" @click="editFood(scope.row)">编辑</el-button>
