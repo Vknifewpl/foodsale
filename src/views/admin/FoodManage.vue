@@ -2,11 +2,16 @@
   <div class="food-manage-page">
     <div class="page-header">
       <h3>菜品管理</h3>
-      <el-button type="primary" @click="showAddDialog">新增菜品</el-button>
+      <div class="header-actions">
+        <el-select v-model="filterCategoryId" placeholder="全部分类" clearable @change="currentPage = 1" style="width: 160px; margin-right: 12px;">
+          <el-option v-for="c in categories" :key="c.id" :label="c.name" :value="c.id"></el-option>
+        </el-select>
+        <el-button type="primary" @click="showAddDialog">新增菜品</el-button>
+      </div>
     </div>
     
     <div class="page-content" v-loading="loading">
-      <el-table :data="foods" stripe style="width: 100%">
+      <el-table :data="filteredFoods" stripe style="width: 100%">
         <el-table-column prop="id" label="ID" width="80"></el-table-column>
         <el-table-column prop="name" label="菜品名称" width="200"></el-table-column>
         <el-table-column label="菜品图片" width="120">
@@ -46,7 +51,7 @@
     </div>
     
     <!-- 新增/编辑菜品弹窗 -->
-    <el-dialog :title="dialogTitle" :visible.sync="dialogVisible" width="50%" :before-close="handleClose">
+    <el-dialog :title="dialogTitle" :visible.sync="dialogVisible" width="50%">
       <el-form :model="foodForm" :rules="foodRules" ref="foodForm" label-width="100px">
         <el-form-item label="菜品名称" prop="name">
           <el-input v-model="foodForm.name" placeholder="请输入菜品名称"></el-input>
@@ -79,10 +84,11 @@
         <el-form-item label="菜品图片">
           <el-upload
             class="avatar-uploader"
-            action="http://localhost:8080/file/upload"
+            action="http://localhost:8089/file/upload"
             :show-file-list="false"
             :on-success="handleAvatarSuccess"
             :before-upload="beforeAvatarUpload"
+            :headers="uploadHeaders"
             name="file"
           >
             <img v-if="foodForm.image" :src="getImageUrl(foodForm.image)" class="avatar">
@@ -107,6 +113,7 @@ export default {
     return {
       loading: false,
       foods: [],
+      filterCategoryId: '',
       currentPage: 1,
       pageSize: 10,
       total: 0,
@@ -138,6 +145,15 @@ export default {
   computed: {
     dialogTitle() {
       return this.isEdit ? '编辑菜品' : '新增菜品'
+    },
+    filteredFoods() {
+      if (!this.filterCategoryId) return this.foods
+      return this.foods.filter(f => f.categoryId === this.filterCategoryId)
+    },
+    uploadHeaders() {
+      return {
+        Authorization: `Bearer ${localStorage.getItem('admin_token') || ''}`
+      }
     }
   },
   created() {
@@ -151,7 +167,7 @@ export default {
         const res = await this.$axios.get('/food/list')
         if (res.data.code === 200) {
           this.foods = res.data.data || []
-          this.total = this.foods.length
+          this.total = this.filteredFoods.length
         } else {
           this.$message.error(res.data.msg || '获取菜品列表失败')
         }
@@ -271,7 +287,7 @@ export default {
     getImageUrl(image) {
       if (!image) return require('@/assets/default-food.png')
       if (image.startsWith('http')) return image
-      return 'http://localhost:8080' + image
+      return 'http://localhost:8089' + image
     }
   }
 }
@@ -279,40 +295,101 @@ export default {
 
 <style scoped>
 .food-manage-page {
-  padding: 20px;
+  padding: 40px;
   background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  border-radius: 24px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
 }
 
 .page-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 32px;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
 }
 
 .page-header h3 {
   margin: 0;
-  font-size: 18px;
-  color: #333;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: #1d1d1f;
 }
 
-.avatar-uploader .el-upload {
-  border: 1px dashed #d9d9d9;
-  border-radius: 6px;
-  cursor: pointer;
-  position: relative;
+.page-header >>> .el-button {
+  border-radius: 980px;
+  padding: 12px 24px;
+  font-weight: 600;
+  background: #0071e3;
+  border: none;
+  box-shadow: 0 4px 14px rgba(0, 113, 227, 0.2);
+  transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+.page-header >>> .el-button:hover {
+  background: #0077ed;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 113, 227, 0.3);
+}
+
+.food-manage-page >>> .el-table {
+  border-radius: 16px;
   overflow: hidden;
 }
 
+.food-manage-page >>> .el-table th, .food-manage-page >>> .el-table tr {
+  background-color: transparent !important;
+}
+
+.food-manage-page >>> .el-table th {
+  background-color: #f5f5f7 !important;
+  color: #86868b;
+  font-weight: 600;
+  border-bottom: none !important;
+  padding: 16px 0;
+}
+
+.food-manage-page >>> .el-table td {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04) !important;
+  padding: 16px 0;
+  color: #1d1d1f;
+}
+
+.food-manage-page >>> .el-table::before {
+  display: none;
+}
+
+.food-manage-page >>> .el-table--striped .el-table__body tr.el-table__row--striped td {
+  background: rgba(0, 0, 0, 0.01) !important;
+}
+
+.food-manage-page >>> .el-image {
+  border-radius: 12px;
+}
+
+.avatar-uploader .el-upload {
+  border: 2px dashed rgba(0, 0, 0, 0.1);
+  border-radius: 16px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s;
+  background: #f5f5f7;
+}
+
 .avatar-uploader .el-upload:hover {
-  border-color: #409eff;
+  border-color: #0071e3;
+  background: rgba(0, 113, 227, 0.04);
 }
 
 .avatar-uploader-icon {
   font-size: 28px;
-  color: #8c939d;
+  color: #86868b;
   width: 178px;
   height: 178px;
   line-height: 178px;
@@ -326,8 +403,16 @@ export default {
 }
 
 .upload-tip {
-  font-size: 12px;
-  color: #999;
-  margin-top: 5px;
+  font-size: 13px;
+  color: #86868b;
+  margin-top: 8px;
+  font-weight: 500;
+}
+
+/* 按钮圆角优化 */
+.food-manage-page >>> .el-table .el-button {
+  border-radius: 980px;
+  padding: 8px 16px;
+  font-weight: 500;
 }
 </style>

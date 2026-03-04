@@ -1,9 +1,12 @@
 <template>
   <div id="app">
-    <!-- 顶部导航栏 -->
+    <!-- 顶部导航栏（仅在用户端非登录页面显示） -->
     <el-header class="header" v-if="showHeader">
-      <div class="logo" @click="$router.push('/')">美食点餐</div>
+      <div class="logo" @click="$router.push('/')"></div>
       <div class="nav-right">
+        <el-button type="text" icon="el-icon-s-home" @click="$router.push('/')" style="margin-right: 8px;">
+          首页
+        </el-button>
         <el-badge :value="cartCount" :hidden="cartCount === 0" class="cart-badge">
           <el-button type="text" icon="el-icon-shopping-cart-2" @click="$router.push('/cart')">
             购物车
@@ -30,7 +33,7 @@
     </el-header>
     
     <!-- 主内容区 -->
-    <el-main class="main">
+    <el-main :class="['main', { 'no-header': !showHeader }]">
       <router-view/>
     </el-main>
   </div>
@@ -45,7 +48,12 @@ export default {
     ...mapGetters(['isLoggedIn', 'cartCount']),
     ...mapState(['username']),
     showHeader() {
-      return !['Login', 'Register'].includes(this.$route.name)
+      // 登录、注册、管理员相关页面不显示用户端导航栏
+      const hiddenRoutes = ['Login', 'Register', 'AdminLogin']
+      if (hiddenRoutes.includes(this.$route.name)) return false
+      // 管理员后台页面不显示用户端导航栏
+      if (this.$route.path.startsWith('/admin')) return false
+      return true
     }
   },
   methods: {
@@ -63,7 +71,9 @@ export default {
         case 'logout':
           this.$store.dispatch('logout')
           this.$message.success('已退出登录')
-          this.$router.push('/')
+          if (this.$route.path !== '/') {
+            this.$router.push('/')
+          }
           break
       }
     }
@@ -72,60 +82,126 @@ export default {
 </script>
 
 <style>
+/* 极简 Apple 设计语言全局样式 */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
-#app {
-  font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', Arial, sans-serif;
+body {
+  color: #1d1d1f;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", "Helvetica", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
+#app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-image: url('~@/assets/back.png');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}
+
+/* 毛玻璃顶级导航栏 */
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 20px;
-  background: linear-gradient(135deg, #ff6b6b, #ffa502);
-  color: white;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  padding: 0 40px;
+  background: transparent;
+  border-bottom: none;
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   z-index: 1000;
+  height: 60px;
+  transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 
 .logo {
-  font-size: 24px;
-  font-weight: bold;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.5px;
+  color: #1d1d1f;
   cursor: pointer;
+  transition: opacity 0.3s;
+}
+.logo:hover {
+  opacity: 0.7;
 }
 
 .nav-right {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 24px;
 }
 
 .nav-right .el-button--text {
-  color: white;
+  color: #1d1d1f;
+  font-size: 14px;
+  font-weight: 500;
+  transition: color 0.3s;
 }
-
-.cart-badge {
-  margin-right: 10px;
+.nav-right .el-button--text:hover {
+  color: #0071e3;
 }
 
 .el-dropdown-link {
   cursor: pointer;
-  color: white;
+  color: #1d1d1f;
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.el-dropdown-link:hover {
+  color: #0071e3;
 }
 
 .main {
   margin-top: 60px;
-  padding: 20px;
-  min-height: calc(100vh - 60px);
-  background-color: #f5f5f5;
+  padding: 40px 20px;
+  flex: 1;
+}
+
+.main.no-header {
+  margin-top: 0;
+  padding: 0;
+}
+
+/* 全局覆盖 ElementUI 样式以更贴合简约风 */
+.el-button--primary {
+  background-color: #0071e3 !important;
+  border-color: #0071e3 !important;
+  border-radius: 980px !important; /* 全圆角按钮 */
+  font-weight: 500 !important;
+  transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1) !important;
+}
+.el-button--primary:hover {
+  background-color: #0077ed !important;
+  transform: scale(1.02);
+}
+.el-button {
+  border-radius: 980px !important;
+  border: none;
+  font-weight: 500;
+  transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+.el-button.el-button--default {
+  background-color: rgba(0, 0, 0, 0.05);
+  color: #1d1d1f;
+}
+.el-button.el-button--default:hover {
+  background-color: rgba(0, 0, 0, 0.08);
+}
+.el-button.el-button--danger {
+  background-color: #e30000;
+  color: #fff;
 }
 </style>

@@ -242,7 +242,7 @@ export default {
     getImageUrl(image) {
       if (!image) return require('@/assets/default-food.png')
       if (image.startsWith('http')) return image
-      return 'http://localhost:8080' + image
+      return 'http://localhost:8089' + image
     }
   }
 }
@@ -250,31 +250,84 @@ export default {
 
 <style scoped>
 .order-manage-page {
-  padding: 20px;
+  padding: 40px;
   background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  border-radius: 24px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
 }
 
 .page-header {
-  margin-bottom: 20px;
+  margin-bottom: 32px;
 }
 
 .page-header h3 {
   margin: 0;
-  font-size: 18px;
-  color: #333;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: #1d1d1f;
 }
 
 .filter-section {
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
+.filter-section >>> .el-input__inner {
+  border-radius: 980px;
+  background: #f5f5f7;
+  border: 1px solid transparent;
+}
+.filter-section >>> .el-input__inner:focus {
+  background: #fff;
+  border-color: #0071e3;
+}
+
+.filter-section >>> .el-button {
+  border-radius: 980px;
+  font-weight: 600;
+  padding: 10px 24px;
+  box-shadow: 0 4px 14px rgba(0, 113, 227, 0.2);
+}
+
+.order-manage-page >>> .el-table {
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.order-manage-page >>> .el-table th {
+  background-color: #f5f5f7 !important;
+  color: #86868b;
+  font-weight: 600;
+  border-bottom: none !important;
+  padding: 16px 0;
+}
+
+.order-manage-page >>> .el-table td {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04) !important;
+  padding: 16px 0;
+  color: #1d1d1f;
+}
+
+.order-manage-page >>> .el-table::before {
+  display: none;
+}
+
+.order-manage-page >>> .el-table--striped .el-table__body tr.el-table__row--striped td {
+  background: rgba(0, 0, 0, 0.01) !important;
+}
+
+.order-manage-page >>> .el-table .el-button {
+  border-radius: 980px;
+  padding: 8px 16px;
+  font-weight: 500;
+}
+
+/* 订单明细弹窗样式 */
 .info-row {
   display: flex;
-  margin-bottom: 10px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #f5f5f5;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
 }
 
 .info-row:last-child {
@@ -284,24 +337,47 @@ export default {
 }
 
 .label {
-  width: 100px;
-  color: #999;
-  font-size: 14px;
+  width: 120px;
+  color: #86868b;
+  font-size: 15px;
+  font-weight: 500;
 }
 
 .value {
   flex: 1;
-  color: #333;
-  font-size: 14px;
+  color: #1d1d1f;
+  font-size: 15px;
+  font-weight: 600;
 }
 
 .order-items {
-  margin-top: 20px;
+  margin-top: 32px;
+  background: #f5f5f7;
+  border-radius: 16px;
+  padding: 24px;
 }
 
 .order-items h4 {
-  margin-bottom: 15px;
-  font-size: 16px;
-  color: #333;
+  margin: 0 0 20px 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1d1d1f;
+  letter-spacing: -0.5px;
+}
+
+.order-items >>> .el-table th {
+  background-color: transparent !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05) !important;
+}
+.order-items >>> .el-table td {
+  background-color: transparent !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Tag圆角 */
+.order-manage-page >>> .el-tag {
+  border-radius: 980px;
+  border: none;
+  font-weight: 600;
 }
 </style>

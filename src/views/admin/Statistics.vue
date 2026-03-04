@@ -36,7 +36,7 @@
               <i class="el-icon-dish"></i>
             </div>
             <div class="card-content">
-              <div class="stat-number">{{ stats.hotFoods?.length || 0 }}</div>
+              <div class="stat-number">{{ stats.hotTop10?.length || 0 }}</div>
               <div class="stat-label">热销菜品数</div>
             </div>
           </div>
@@ -46,7 +46,7 @@
     
     <div class="hot-foods-section">
       <h3>热销菜品TOP10</h3>
-      <el-table :data="stats.hotFoods" stripe style="width: 100%">
+      <el-table :data="stats.hotTop10" stripe style="width: 100%">
         <el-table-column type="index" label="#" width="50"></el-table-column>
         <el-table-column prop="name" label="菜品名称" width="200"></el-table-column>
         <el-table-column prop="categoryName" label="分类" width="120"></el-table-column>
@@ -54,24 +54,12 @@
         <el-table-column prop="price" label="价格" width="100">
           <template slot-scope="scope">¥{{ scope.row.price }}</template>
         </el-table-column>
-        <el-table-column label="操作" width="120">
-          <template slot-scope="scope">
-            <el-button size="mini" type="text" @click="viewFoodDetail(scope.row)">查看</el-button>
-          </template>
-        </el-table-column>
       </el-table>
-    </div>
-    
-    <div class="charts-section">
-      <h3>销售趋势图</h3>
-      <div id="sales-chart" style="height: 400px;"></div>
     </div>
   </div>
 </template>
 
 <script>
-import * as echarts from 'echarts'
-
 export default {
   name: 'Statistics',
   data() {
@@ -79,7 +67,7 @@ export default {
       stats: {
         totalOrders: 0,
         totalSales: 0,
-        hotFoods: []
+        hotTop10: []
       }
     }
   },
@@ -94,7 +82,7 @@ export default {
           this.stats = res.data.data || {
             totalOrders: 0,
             totalSales: 0,
-            hotFoods: []
+            hotTop10: []
           }
         } else {
           this.$message.error(res.data.msg || '获取统计数据失败')
@@ -103,67 +91,73 @@ export default {
         this.$message.error('网络错误，请重试')
       }
     },
-    viewFoodDetail(food) {
-      this.$message.info(`菜品名称: ${food.name}\n分类: ${food.categoryName}\n销量: ${food.orderCount}\n价格: ¥${food.price}`)
-    }
   }
 }
 </script>
 
 <style scoped>
 .statistics-page {
-  padding: 20px;
+  padding: 40px;
   background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  border-radius: 24px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
 }
 
 .page-header {
-  margin-bottom: 20px;
+  margin-bottom: 32px;
 }
 
 .page-header h3 {
   margin: 0;
-  font-size: 18px;
-  color: #333;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: #1d1d1f;
 }
 
 .stats-overview {
-  margin-bottom: 30px;
+  margin-bottom: 48px;
 }
 
 .stat-card {
   display: flex;
   align-items: center;
   background: #fff;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-  height: 100px;
+  border-radius: 24px;
+  padding: 32px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+  height: 120px;
+  border: 1px solid rgba(0, 0, 0, 0.02);
+  transition: transform 0.4s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.06);
 }
 
 .card-icon {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
+  width: 72px;
+  height: 72px;
+  border-radius: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #fff;
-  font-size: 24px;
-  margin-right: 15px;
+  font-size: 32px;
+  margin-right: 24px;
 }
 
 .bg-blue {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #0071e3;
 }
 
 .bg-green {
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  background: #34c759;
 }
 
 .bg-orange {
-  background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+  background: #ff9f0a;
 }
 
 .card-content {
@@ -171,15 +165,17 @@ export default {
 }
 
 .stat-number {
-  font-size: 24px;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 5px;
+  font-size: 32px;
+  font-weight: 700;
+  color: #1d1d1f;
+  margin-bottom: 4px;
+  letter-spacing: -1px;
 }
 
 .stat-label {
-  font-size: 14px;
-  color: #999;
+  font-size: 15px;
+  font-weight: 500;
+  color: #86868b;
 }
 
 .hot-foods-section {
@@ -187,14 +183,42 @@ export default {
 }
 
 .hot-foods-section h3 {
-  margin: 0 0 20px 0;
-  font-size: 16px;
-  color: #333;
+  margin: 0 0 24px 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #1d1d1f;
+  letter-spacing: -0.5px;
 }
 
-.charts-section h3 {
-  margin: 0 0 20px 0;
-  font-size: 16px;
-  color: #333;
+/* 表格全局覆写 */
+.statistics-page >>> .el-table {
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.statistics-page >>> .el-table th, .statistics-page >>> .el-table tr {
+  background-color: transparent !important;
+}
+
+.statistics-page >>> .el-table th {
+  background-color: #f5f5f7 !important;
+  color: #86868b;
+  font-weight: 600;
+  border-bottom: none !important;
+  padding: 16px 0;
+}
+
+.statistics-page >>> .el-table td {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04) !important;
+  padding: 16px 0;
+  color: #1d1d1f;
+}
+
+.statistics-page >>> .el-table::before {
+  display: none;
+}
+
+.statistics-page >>> .el-table--striped .el-table__body tr.el-table__row--striped td {
+  background: rgba(0, 0, 0, 0.01) !important;
 }
 </style>

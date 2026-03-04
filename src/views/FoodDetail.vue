@@ -1,7 +1,6 @@
 <template>
   <div class="food-detail-page">
     <div class="page-header">
-      <el-button icon="el-icon-arrow-left" @click="$router.back()">返回</el-button>
       <h2>菜品详情</h2>
     </div>
     
@@ -98,14 +97,13 @@ export default {
   },
   created() {
     this.fetchFoodDetail()
-    this.fetchComments()
     this.checkCollected()
   },
   methods: {
     getImageUrl(image) {
       if (!image) return require('@/assets/default-food.png')
       if (image.startsWith('http')) return image
-      return 'http://localhost:8080' + image
+      return 'http://localhost:8089' + image
     },
     async fetchFoodDetail() {
       this.loading = true
@@ -115,7 +113,13 @@ export default {
           params: { foodId }
         })
         if (res.data.code === 200) {
-          this.food = res.data.data
+          // 后端返回 {food: Food, comments: Comment[], isCollected?: boolean}
+          const result = res.data.data
+          this.food = result.food
+          this.comments = result.comments || []
+          if (result.isCollected !== undefined) {
+            this.isCollected = result.isCollected
+          }
         } else {
           this.$message.error(res.data.msg || '获取菜品详情失败')
         }
@@ -123,19 +127,6 @@ export default {
         this.$message.error('网络错误，请重试')
       } finally {
         this.loading = false
-      }
-    },
-    async fetchComments() {
-      try {
-        const foodId = this.$route.params.id
-        const res = await this.$axios.get('/comment/food', {
-          params: { foodId }
-        })
-        if (res.data.code === 200) {
-          this.comments = res.data.data || []
-        }
-      } catch (e) {
-        console.log('获取评论失败')
       }
     },
     async checkCollected() {
@@ -185,11 +176,11 @@ export default {
       }
     },
     addToCart() {
-      this.$store.commit('addToCart', {
-        id: this.food.id,
-        name: this.food.name,
+      this.$store.dispatch('addToCart', {
+        foodId: this.food.id,
+        foodName: this.food.name,
+        foodImage: this.food.image,
         price: this.food.price,
-        image: this.food.image,
         quantity: this.quantity
       })
       this.$message.success('已加入购物车')
@@ -205,43 +196,45 @@ export default {
 <style scoped>
 .food-detail-page {
   min-height: 100vh;
-  background: #f5f5f5;
-  padding-bottom: 40px;
+  padding-bottom: 80px;
 }
 
 .page-header {
-  background: #fff;
-  padding: 15px 20px;
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  background: transparent;
+  padding: 16px 0 24px 0;
+  max-width: 1000px;
+  margin: 0 auto;
 }
+
+
 
 .page-header h2 {
   margin: 0;
-  font-size: 18px;
-  color: #333;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: #1d1d1f;
 }
 
 .food-content {
-  max-width: 1200px;
-  margin: 20px auto;
-  padding: 0 20px;
+  max-width: 1000px;
+  margin: 0 auto;
 }
 
 .food-main {
   background: #fff;
-  border-radius: 8px;
+  border-radius: 24px;
   overflow: hidden;
   display: flex;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
 }
 
 .food-image {
-  width: 400px;
-  height: 400px;
+  width: 320px;
+  height: 320px;
   flex-shrink: 0;
+  background: #f5f5f7;
 }
 
 .food-image img {
@@ -252,91 +245,118 @@ export default {
 
 .food-info {
   flex: 1;
-  padding: 30px;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
 }
 
 .food-name {
   font-size: 28px;
-  color: #333;
-  margin: 0 0 20px 0;
+  font-weight: 700;
+  letter-spacing: -0.8px;
+  color: #1d1d1f;
+  margin: 0 0 12px 0;
 }
 
 .food-meta {
   display: flex;
   gap: 20px;
-  color: #999;
-  font-size: 14px;
-  margin-bottom: 20px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid #eee;
+  color: #86868b;
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 24px;
 }
 
 .food-price {
-  background: #fff5f5;
-  padding: 20px;
-  border-radius: 8px;
-  margin-bottom: 20px;
+  background: #f5f5f7;
+  padding: 16px 24px;
+  border-radius: 16px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .food-price .label {
   font-size: 14px;
-  color: #999;
-  margin-right: 10px;
+  font-weight: 500;
+  color: #86868b;
 }
 
 .food-price .value {
-  font-size: 32px;
-  font-weight: 600;
-  color: #f56c6c;
+  font-size: 28px;
+  font-weight: 700;
+  color: #1d1d1f;
+  letter-spacing: -0.5px;
 }
 
 .food-desc {
-  margin-bottom: 30px;
+  margin-bottom: auto;
 }
 
 .food-desc h3 {
-  font-size: 16px;
-  color: #333;
-  margin: 0 0 10px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1d1d1f;
+  margin: 0 0 12px 0;
 }
 
 .food-desc p {
-  color: #666;
-  line-height: 1.8;
+  color: #55555a;
+  line-height: 1.6;
+  font-size: 15px;
   margin: 0;
 }
 
 .food-actions {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 12px;
+  margin-top: 24px;
 }
 
 .quantity-control {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+  background: #f5f5f7;
+  border-radius: 980px;
+  padding: 4px;
+}
+.quantity-control >>> .el-input-number__decrease,
+.quantity-control >>> .el-input-number__increase {
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  color: #1d1d1f;
+}
+.quantity-control >>> .el-input__inner {
+  background: transparent;
+  border: none;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1d1d1f;
 }
 
 .comments-section {
   background: #fff;
-  border-radius: 8px;
-  padding: 30px;
+  border-radius: 24px;
+  padding: 32px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
 }
 
 .section-title {
-  font-size: 18px;
-  color: #333;
-  margin: 0 0 20px 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: #1d1d1f;
+  margin: 0 0 32px 0;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
+  letter-spacing: -0.5px;
 }
 
 .comment-count {
-  font-size: 14px;
-  color: #999;
-  font-weight: normal;
+  font-size: 16px;
+  color: #86868b;
+  font-weight: 500;
 }
 
 .comments-list {
@@ -346,38 +366,41 @@ export default {
 }
 
 .comment-item {
-  padding: 20px;
-  background: #f9f9f9;
-  border-radius: 8px;
+  padding: 24px;
+  background: #f5f5f7;
+  border-radius: 20px;
 }
 
 .comment-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
+  margin-bottom: 16px;
 }
 
 .user-info {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .username {
-  font-weight: 500;
-  color: #333;
+  font-weight: 600;
+  font-size: 15px;
+  color: #1d1d1f;
 }
 
 .comment-content {
-  color: #666;
+  color: #1d1d1f;
+  font-size: 15px;
   line-height: 1.6;
-  margin-bottom: 10px;
+  margin-bottom: 16px;
 }
 
 .comment-time {
-  font-size: 12px;
-  color: #999;
+  font-size: 13px;
+  font-weight: 500;
+  color: #86868b;
 }
 
 @media (max-width: 768px) {
@@ -387,11 +410,23 @@ export default {
   
   .food-image {
     width: 100%;
-    height: 300px;
+    height: 350px;
+  }
+  
+  .food-info {
+    padding: 32px 24px;
   }
   
   .food-actions {
     flex-wrap: wrap;
+  }
+  
+  .page-header {
+    padding: 16px 24px;
+  }
+  
+  .food-content {
+    padding: 0 16px;
   }
 }
 </style>

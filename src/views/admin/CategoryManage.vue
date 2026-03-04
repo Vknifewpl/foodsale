@@ -24,7 +24,7 @@
     </div>
     
     <!-- 新增/编辑分类弹窗 -->
-    <el-dialog :title="dialogTitle" :visible.sync="dialogVisible" width="400px" :before-close="handleClose">
+    <el-dialog :title="dialogTitle" :visible.sync="dialogVisible" width="400px">
       <el-form :model="categoryForm" :rules="categoryRules" ref="categoryForm" label-width="100px">
         <el-form-item label="分类名称" prop="name">
           <el-input v-model="categoryForm.name" placeholder="请输入分类名称"></el-input>
@@ -159,22 +159,77 @@ export default {
 
 <style scoped>
 .category-manage-page {
-  padding: 20px;
+  padding: 40px;
   background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  border-radius: 24px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
 }
 
 .page-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 32px;
 }
 
 .page-header h3 {
   margin: 0;
-  font-size: 18px;
-  color: #333;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: #1d1d1f;
+}
+
+.page-header >>> .el-button {
+  border-radius: 980px;
+  padding: 12px 24px;
+  font-weight: 600;
+  background: #0071e3;
+  border: none;
+  box-shadow: 0 4px 14px rgba(0, 113, 227, 0.2);
+  transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+.page-header >>> .el-button:hover {
+  background: #0077ed;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 113, 227, 0.3);
+}
+
+.category-manage-page >>> .el-table {
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.category-manage-page >>> .el-table th, .category-manage-page >>> .el-table tr {
+  background-color: transparent !important;
+}
+
+.category-manage-page >>> .el-table th {
+  background-color: #f5f5f7 !important;
+  color: #86868b;
+  font-weight: 600;
+  border-bottom: none !important;
+  padding: 16px 0;
+}
+
+.category-manage-page >>> .el-table td {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04) !important;
+  padding: 16px 0;
+  color: #1d1d1f;
+}
+
+.category-manage-page >>> .el-table::before {
+  display: none;
+}
+
+.category-manage-page >>> .el-table--striped .el-table__body tr.el-table__row--striped td {
+  background: rgba(0, 0, 0, 0.01) !important;
+}
+
+.category-manage-page >>> .el-table .el-button {
+  border-radius: 980px;
+  padding: 8px 16px;
+  font-weight: 500;
 }
 </style>

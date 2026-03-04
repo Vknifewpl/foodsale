@@ -1,7 +1,6 @@
 <template>
   <div class="order-pay-page">
     <div class="page-header">
-      <el-button icon="el-icon-arrow-left" @click="$router.go(-1)">返回</el-button>
       <h2>订单支付</h2>
     </div>
     
@@ -9,12 +8,12 @@
       <div class="order-info">
         <h3>订单信息</h3>
         <div class="order-items">
-          <div class="order-item" v-for="item in orderItems" :key="item.id">
+          <div class="order-item" v-for="item in orderItems" :key="item.foodId">
             <div class="item-image">
-              <img :src="getImageUrl(item.image)" :alt="item.name" />
+              <img :src="getImageUrl(item.foodImage)" :alt="item.foodName" />
             </div>
             <div class="item-details">
-              <h4>{{ item.name }}</h4>
+              <h4>{{ item.foodName }}</h4>
               <div class="item-meta">
                 <span>单价: ¥{{ item.price }}</span>
                 <span>数量: {{ item.quantity }}</span>
@@ -28,10 +27,6 @@
           <div class="summary-row">
             <span>商品总价:</span>
             <span>¥{{ subtotal.toFixed(2) }}</span>
-          </div>
-          <div class="summary-row">
-            <span>配送费:</span>
-            <span>¥0.00</span>
           </div>
           <div class="summary-row total-row">
             <span>订单总额:</span>
@@ -89,18 +84,21 @@ export default {
     getImageUrl(image) {
       if (!image) return require('@/assets/default-food.png')
       if (image.startsWith('http')) return image
-      return 'http://localhost:8080' + image
+      return 'http://localhost:8089' + image
     },
     loadOrderItems() {
-      // 从路由参数判断是从购物车还是直接下单
+      // 从购物车获取数据
       if (this.$route.query.fromCart === 'true') {
-        // 从购物车获取数据
-        this.orderItems = [...this.$store.state.cart.items]
+        this.orderItems = this.$store.state.cart.map(item => ({
+          foodId: item.foodId,
+          foodName: item.foodName,
+          foodImage: item.foodImage,
+          price: item.price,
+          quantity: item.quantity
+        }))
       } else {
-        // 直接下单（例如从菜品详情页）
-        // 这里可以根据实际情况获取数据
-        // 临时示例数据
-        this.orderItems = this.$route.params.items || []
+        // 直接下单场景（暂不支持）
+        this.orderItems = []
       }
     },
     async submitOrder() {
@@ -118,13 +116,12 @@ export default {
 
       this.submitting = true
       try {
-        // 提交订单
+        // 提交订单（userId由后端从Token获取）
         const orderData = {
-          userId: JSON.parse(localStorage.getItem('user')).id,
           orderItems: this.orderItems.map(item => ({
-            foodId: item.id,
-            foodName: item.name,
-            foodImage: item.image,
+            foodId: item.foodId,
+            foodName: item.foodName,
+            foodImage: item.foodImage,
             price: item.price,
             quantity: item.quantity,
             subtotal: parseFloat((item.price * item.quantity).toFixed(2))
@@ -139,7 +136,7 @@ export default {
           const payRes = await this.$axios.post('/order/pay', { orderNo })
           if (payRes.data.code === 200) {
             // 清空购物车
-            this.$store.commit('clearCart')
+            this.$store.commit('CLEAR_CART')
             
             this.$message.success('订单提交成功！')
             this.$router.push(`/order/${orderNo}`)
@@ -162,56 +159,59 @@ export default {
 <style scoped>
 .order-pay-page {
   min-height: 100vh;
-  background: #f5f5f5;
   padding-bottom: 40px;
 }
 
 .page-header {
-  background: #fff;
-  padding: 15px 20px;
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  background: transparent;
+  padding: 16px 0 24px 0;
+  max-width: 1000px;
+  margin: 0 auto;
 }
 
 .page-header h2 {
   margin: 0;
-  font-size: 18px;
-  color: #333;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: #1d1d1f;
 }
 
 .order-content {
   max-width: 1000px;
-  margin: 20px auto;
-  padding: 0 20px;
+  margin: 0 auto;
   display: grid;
   grid-template-columns: 2fr 1fr;
-  gap: 20px;
+  gap: 28px;
+  align-items: start;
 }
 
 .order-info {
   background: #fff;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  border-radius: 18px;
+  padding: 24px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
 }
 
 .order-info h3 {
-  margin: 0 0 20px 0;
+  margin: 0 0 16px 0;
   font-size: 18px;
-  color: #333;
+  font-weight: 700;
+  color: #1d1d1f;
+  letter-spacing: -0.3px;
 }
 
 .order-items {
-  margin-bottom: 20px;
+  margin-bottom: 16px;
+  max-height: 340px;
+  overflow-y: auto;
 }
 
 .order-item {
   display: flex;
-  gap: 15px;
-  padding: 15px 0;
-  border-bottom: 1px solid #eee;
+  gap: 14px;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .order-item:last-child {
@@ -219,8 +219,8 @@ export default {
 }
 
 .item-image {
-  width: 80px;
-  height: 80px;
+  width: 68px;
+  height: 68px;
   flex-shrink: 0;
 }
 
@@ -228,30 +228,38 @@ export default {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: 8px;
+  border-radius: 12px;
 }
 
 .item-details {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .item-details h4 {
-  margin: 0 0 10px 0;
-  font-size: 16px;
-  color: #333;
+  margin: 0 0 6px 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #1d1d1f;
 }
 
 .item-meta {
   display: flex;
-  flex-direction: column;
-  gap: 5px;
-  font-size: 14px;
-  color: #666;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: #86868b;
+  font-weight: 500;
 }
 
 .order-summary {
-  border-top: 1px solid #eee;
-  padding-top: 15px;
+  background: #f5f5f7;
+  border-radius: 14px;
+  padding: 16px 20px;
 }
 
 .summary-row {
@@ -259,60 +267,73 @@ export default {
   justify-content: space-between;
   margin-bottom: 10px;
   font-size: 14px;
-  color: #666;
+  font-weight: 500;
+  color: #86868b;
 }
 
 .summary-row.total-row {
   font-size: 16px;
   font-weight: 600;
-  color: #333;
+  color: #1d1d1f;
   padding-top: 10px;
-  border-top: 1px solid #eee;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
   margin-top: 10px;
+  margin-bottom: 0;
 }
 
 .total-amount {
-  color: #f56c6c;
-  font-size: 18px;
+  color: #1d1d1f;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
 }
 
 .payment-section {
-  background: #fff;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  background: transparent;
+  padding: 0;
   height: fit-content;
 }
 
 .payment-section h3 {
-  margin: 0 0 20px 0;
+  margin: 0 0 14px 0;
   font-size: 18px;
-  color: #333;
+  font-weight: 700;
+  color: #1d1d1f;
+  letter-spacing: -0.3px;
 }
 
 .payment-methods {
-  margin-bottom: 30px;
+  margin-bottom: 20px;
 }
 
 .payment-method {
-  padding: 15px;
-  border: 2px solid #e4e7ed;
-  border-radius: 8px;
+  padding: 16px;
+  background: #fff;
+  border: 2px solid transparent;
+  border-radius: 14px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
 }
 
 .payment-method.active {
-  border-color: #409eff;
-  background: #ecf5ff;
+  border-color: #0071e3;
+  background: rgba(0, 113, 227, 0.04);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 113, 227, 0.15);
 }
 
 .payment-method i {
   font-size: 20px;
-  color: #409eff;
+  color: #0071e3;
+}
+.payment-method span {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1d1d1f;
 }
 
 .confirm-section {
@@ -321,13 +342,25 @@ export default {
 
 .confirm-section .el-button {
   width: 100%;
-  height: 50px;
+  height: 48px;
   font-size: 16px;
+  font-weight: 600;
+  box-shadow: 0 8px 24px rgba(0, 113, 227, 0.3);
 }
 
 @media (max-width: 768px) {
   .order-content {
     grid-template-columns: 1fr;
+    gap: 24px;
+    padding: 0 16px;
+  }
+  
+  .page-header {
+    padding: 16px;
+  }
+  
+  .order-info {
+    padding: 24px;
   }
 }
 </style>

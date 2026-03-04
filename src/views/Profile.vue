@@ -1,7 +1,6 @@
 <template>
   <div class="profile-page">
     <div class="page-header">
-      <el-button icon="el-icon-arrow-left" @click="$router.go(-1)">返回</el-button>
       <h2>个人中心</h2>
     </div>
     
@@ -11,8 +10,8 @@
           <el-avatar :size="80" icon="el-icon-user-solid"></el-avatar>
         </div>
         <div class="user-details">
-          <h3>{{ userInfo.username || '游客' }}</h3>
-          <p>{{ userInfo.role === 1 ? '管理员' : '普通用户' }}</p>
+          <h3>{{ username || '游客' }}</h3>
+          <p>普通用户</p>
           <div class="user-stats">
             <div class="stat-item">
               <span class="stat-number">{{ orderCount }}</span>
@@ -41,11 +40,11 @@
             </div>
             <span>我的收藏</span>
           </div>
-          <div class="link-item" @click="goToProfile">
-            <div class="link-icon">
-              <i class="el-icon-setting"></i>
+          <div class="link-item" @click="goToCart">
+            <div class="link-icon cart-icon">
+              <i class="el-icon-shopping-cart-2"></i>
             </div>
-            <span>账户设置</span>
+            <span>购物车</span>
           </div>
         </div>
       </div>
@@ -58,44 +57,38 @@
 </template>
 
 <script>
+import { mapState } from 'vuex'
+
 export default {
   name: 'Profile',
   data() {
     return {
-      userInfo: {},
       orderCount: 0,
       collectionCount: 0
     }
   },
+  computed: {
+    ...mapState(['username'])
+  },
   created() {
-    this.loadUserInfo()
     this.loadStats()
   },
   methods: {
-    loadUserInfo() {
-      const userStr = localStorage.getItem('user')
-      if (userStr) {
-        this.userInfo = JSON.parse(userStr)
-      }
-    },
     async loadStats() {
       const token = localStorage.getItem('token')
       if (!token) return
       
       try {
-        // 获取订单数量
-        const userId = JSON.parse(localStorage.getItem('user')).id
+        // 获取订单数量（userId由后端从Token获取）
         const orderRes = await this.$axios.get('/order/list', {
-          params: { userId, status: null }
+          params: { status: null }
         })
         if (orderRes.data.code === 200) {
           this.orderCount = orderRes.data.data?.length || 0
         }
         
-        // 获取收藏数量
-        const collectionRes = await this.$axios.get('/collection/list', {
-          params: { userId }
-        })
+        // 获取收藏数量（userId由后端从Token获取）
+        const collectionRes = await this.$axios.get('/collection/list')
         if (collectionRes.data.code === 200) {
           this.collectionCount = collectionRes.data.data?.length || 0
         }
@@ -109,8 +102,8 @@ export default {
     goToCollection() {
       this.$router.push('/collection')
     },
-    goToProfile() {
-      this.$message.info('账户设置功能待完善')
+    goToCart() {
+      this.$router.push('/cart')
     },
     logout() {
       this.$confirm('确定要退出登录吗？', '提示', {
@@ -118,9 +111,7 @@ export default {
         cancelButtonText: '取消',
         type: 'warning'
       }).then(() => {
-        localStorage.removeItem('token')
-        localStorage.removeItem('user')
-        this.$store.commit('setUser', null)
+        this.$store.dispatch('logout')
         this.$message.success('已退出登录')
         this.$router.push('/')
       })
@@ -132,59 +123,70 @@ export default {
 <style scoped>
 .profile-page {
   min-height: 100vh;
-  background: #f5f5f5;
-  padding-bottom: 40px;
+  padding-bottom: 80px;
 }
 
 .page-header {
-  background: #fff;
-  padding: 15px 20px;
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  background: transparent;
+  padding: 16px 0 24px 0;
+  max-width: 680px;
+  margin: 0 auto;
 }
+
 
 .page-header h2 {
   margin: 0;
-  font-size: 18px;
-  color: #333;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: #1d1d1f;
 }
 
 .profile-content {
-  max-width: 600px;
-  margin: 20px auto;
-  padding: 0 20px;
+  max-width: 680px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
 
 .user-info-card {
   background: #fff;
-  border-radius: 8px;
-  padding: 30px;
+  border-radius: 20px;
+  padding: 32px;
   text-align: center;
-  margin-bottom: 20px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
 }
 
 .user-avatar {
-  margin-bottom: 15px;
+  margin-bottom: 24px;
+}
+
+.user-avatar >>> .el-avatar {
+  background: #f5f5f7;
+  color: #86868b;
+  font-size: 40px;
 }
 
 .user-details h3 {
-  margin: 0 0 5px 0;
-  font-size: 20px;
-  color: #333;
+  margin: 0 0 8px 0;
+  font-size: 28px;
+  font-weight: 700;
+  color: #1d1d1f;
+  letter-spacing: -0.5px;
 }
 
 .user-details p {
-  margin: 0 0 20px 0;
-  color: #999;
+  margin: 0 0 32px 0;
+  color: #86868b;
+  font-size: 15px;
+  font-weight: 500;
 }
 
 .user-stats {
   display: flex;
   justify-content: center;
-  gap: 40px;
+  gap: 64px;
 }
 
 .stat-item {
@@ -193,79 +195,107 @@ export default {
 
 .stat-number {
   display: block;
-  font-size: 24px;
-  font-weight: 600;
-  color: #409eff;
+  font-size: 32px;
+  font-weight: 700;
+  color: #1d1d1f;
+  letter-spacing: -1px;
 }
 
 .stat-label {
   font-size: 14px;
-  color: #999;
+  font-weight: 500;
+  color: #86868b;
+  margin-top: 4px;
+  display: inline-block;
 }
 
 .quick-links {
   background: #fff;
-  border-radius: 8px;
-  padding: 20px;
-  margin-bottom: 20px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
 }
 
 .quick-links h3 {
-  margin: 0 0 20px 0;
+  margin: 0 0 24px 0;
   font-size: 18px;
-  color: #333;
+  font-weight: 700;
+  color: #1d1d1f;
+  letter-spacing: -0.5px;
 }
 
 .link-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
+  gap: 24px;
 }
 
 .link-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-  padding: 20px 10px;
-  border-radius: 8px;
+  gap: 12px;
+  padding: 24px 16px;
+  border-radius: 16px;
   cursor: pointer;
-  transition: all 0.3s ease;
-  background: #f9f9f9;
+  transition: all 0.4s cubic-bezier(0.25, 0.1, 0.25, 1);
+  background: #f5f5f7;
 }
 
 .link-item:hover {
-  background: #ecf5ff;
-  transform: translateY(-2px);
+  background: rgba(0, 113, 227, 0.04);
+  transform: translateY(-4px) scale(1.02);
 }
 
 .link-icon {
-  width: 50px;
-  height: 50px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
-  background: #409eff;
+  background: rgba(0, 113, 227, 0.08);
   display: flex;
   align-items: center;
   justify-content: center;
+  color: #0071e3;
+  font-size: 20px;
+  transition: all 0.3s ease;
+}
+
+.cart-icon {
+  background: rgba(0, 113, 227, 0.08);
+  color: #0071e3;
+}
+
+.link-item:hover .link-icon {
+  background: #0071e3;
   color: #fff;
-  font-size: 24px;
 }
 
 .link-item span {
-  font-size: 14px;
-  color: #333;
+  font-size: 15px;
+  font-weight: 600;
+  color: #1d1d1f;
 }
 
 .actions {
   text-align: center;
-  padding: 20px 0;
+  margin-top: 16px;
 }
 
 .actions .el-button {
   width: 100%;
-  height: 45px;
+  height: 48px;
   font-size: 16px;
+  font-weight: 600;
+  border-radius: 980px;
+  background: #f5f5f7;
+  color: #e30000;
+  border: none;
+  transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+.actions .el-button:hover {
+  background: #fee6e6;
+  transform: translateY(-2px);
 }
 
 @media (max-width: 768px) {
@@ -274,7 +304,11 @@ export default {
   }
   
   .user-stats {
-    gap: 20px;
+    gap: 32px;
+  }
+  
+  .page-header, .profile-content {
+    padding: 0 16px;
   }
 }
 </style>

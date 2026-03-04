@@ -1,7 +1,6 @@
 <template>
   <div class="order-detail-page">
     <div class="page-header">
-      <el-button icon="el-icon-arrow-left" @click="$router.go(-1)">返回</el-button>
       <h2>订单详情</h2>
     </div>
     
@@ -55,10 +54,6 @@
         <div class="summary-row">
           <span>商品合计:</span>
           <span>¥{{ subtotal.toFixed(2) }}</span>
-        </div>
-        <div class="summary-row">
-          <span>配送费:</span>
-          <span>¥0.00</span>
         </div>
         <div class="summary-row total-row">
           <span>订单总额:</span>
@@ -128,7 +123,7 @@ export default {
     getImageUrl(image) {
       if (!image) return require('@/assets/default-food.png')
       if (image.startsWith('http')) return image
-      return 'http://localhost:8080' + image
+      return 'http://localhost:8089' + image
     },
     formatTime(time) {
       if (!time) return ''
@@ -139,7 +134,6 @@ export default {
         const res = await this.$axios.post('/order/pay', { orderNo: this.order.orderNo })
         if (res.data.code === 200) {
           this.$message.success('支付成功')
-          // 刷新当前页面
           this.fetchOrderDetail()
         } else {
           this.$message.error(res.data.msg || '支付失败')
@@ -155,44 +149,43 @@ export default {
 <style scoped>
 .order-detail-page {
   min-height: 100vh;
-  background: #f5f5f5;
-  padding-bottom: 40px;
+  padding-bottom: 80px;
 }
 
 .page-header {
-  background: #fff;
-  padding: 15px 20px;
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  background: transparent;
+  padding: 16px 0 24px 0;
+  max-width: 800px;
+  margin: 0 auto;
 }
+
 
 .page-header h2 {
   margin: 0;
-  font-size: 18px;
-  color: #333;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: #1d1d1f;
 }
 
 .order-detail {
   max-width: 800px;
-  margin: 20px auto;
-  padding: 0 20px;
+  margin: 0 auto;
 }
 
 .order-basic-info {
   background: #fff;
-  border-radius: 8px;
-  padding: 20px;
+  border-radius: 18px;
+  padding: 20px 24px;
   margin-bottom: 20px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
 }
 
 .info-row {
   display: flex;
-  margin-bottom: 15px;
-  padding-bottom: 15px;
-  border-bottom: 1px solid #f5f5f5;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .info-row:last-child {
@@ -203,53 +196,64 @@ export default {
 
 .label {
   width: 100px;
-  color: #999;
+  color: #86868b;
   font-size: 14px;
+  font-weight: 500;
 }
 
 .value {
   flex: 1;
-  color: #333;
+  color: #1d1d1f;
   font-size: 14px;
+  font-weight: 600;
 }
 
+.status-text {
+  padding: 6px 14px;
+  border-radius: 980px;
+  font-size: 14px;
+  display: inline-block;
+}
 .status-text.status-0 {
-  color: #f56c6c;
+  background: rgba(227, 0, 0, 0.08);
+  color: #e30000;
 }
-
 .status-text.status-1 {
-  color: #909399;
+  background: #f5f5f7;
+  color: #55555a;
 }
-
 .status-text.status-2 {
-  color: #67c23a;
+  background: rgba(0, 113, 227, 0.08);
+  color: #0071e3;
 }
 
 .order-items-section {
   background: #fff;
-  border-radius: 8px;
-  padding: 20px;
+  border-radius: 18px;
+  padding: 20px 24px;
   margin-bottom: 20px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
 }
 
 .order-items-section h3 {
-  margin: 0 0 20px 0;
-  font-size: 16px;
-  color: #333;
+  margin: 0 0 16px 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1d1d1f;
+  letter-spacing: -0.3px;
 }
 
 .order-items {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 16px;
 }
 
 .order-item {
   display: flex;
-  gap: 15px;
-  padding: 15px 0;
-  border-bottom: 1px solid #f5f5f5;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .order-item:last-child {
@@ -257,86 +261,102 @@ export default {
 }
 
 .item-image {
-  width: 80px;
-  height: 80px;
+  width: 60px;
+  height: 60px;
   flex-shrink: 0;
+  background: #f5f5f7;
+  border-radius: 12px;
+  overflow: hidden;
 }
 
 .item-image img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: 8px;
 }
 
 .item-info {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .item-info h4 {
-  margin: 0 0 10px 0;
-  font-size: 16px;
-  color: #333;
+  margin: 0 0 6px 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #1d1d1f;
 }
 
 .item-meta {
   display: flex;
-  gap: 20px;
-  font-size: 14px;
-  color: #666;
+  gap: 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #86868b;
+  margin: 0;
 }
 
 .order-summary {
-  background: #fff;
-  border-radius: 8px;
-  padding: 20px;
-  margin-bottom: 20px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  background: #f5f5f7;
+  border-radius: 18px;
+  padding: 20px 24px;
+  margin-bottom: 24px;
 }
 
 .order-summary h3 {
-  margin: 0 0 20px 0;
-  font-size: 16px;
-  color: #333;
+  margin: 0 0 16px 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1d1d1f;
+  letter-spacing: -0.3px;
 }
 
 .summary-row {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 10px;
-  padding: 5px 0;
+  margin-bottom: 12px;
   font-size: 14px;
-  color: #666;
+  font-weight: 500;
+  color: #86868b;
 }
 
 .summary-row.total-row {
   font-size: 16px;
   font-weight: 600;
-  color: #333;
-  padding-top: 15px;
-  border-top: 1px solid #eee;
-  margin-top: 10px;
+  color: #1d1d1f;
+  padding-top: 16px;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  margin-top: 12px;
+  margin-bottom: 0;
 }
 
 .total-amount {
-  color: #f56c6c;
-  font-size: 18px;
+  color: #1d1d1f;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
 }
 
 .order-actions {
   text-align: right;
-  padding: 20px 0;
+  padding: 0;
 }
 
 .order-actions .el-button {
-  height: 40px;
-  padding: 0 30px;
+  height: 48px;
+  padding: 0 32px;
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: 980px;
+  box-shadow: 0 8px 24px rgba(0, 113, 227, 0.3);
 }
 
 @media (max-width: 768px) {
   .info-row {
     flex-direction: column;
-    gap: 5px;
+    gap: 8px;
   }
   
   .label {
@@ -345,7 +365,15 @@ export default {
   
   .item-meta {
     flex-direction: column;
-    gap: 5px;
+    gap: 8px;
+  }
+  
+  .page-header, .order-detail {
+    padding: 0 16px;
+  }
+  
+  .order-basic-info, .order-items-section, .order-summary {
+    padding: 24px;
   }
 }
 </style>

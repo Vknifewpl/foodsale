@@ -1,27 +1,26 @@
 <template>
-  <div class="home">
-    <!-- 搜索栏 -->
+  <div class="home-container">
+    <div class="home">
+      <!-- 搜索栏 -->
     <div class="search-bar">
       <el-input v-model="searchKeyword" placeholder="搜索菜品" @keyup.enter.native="handleSearch">
         <el-button slot="append" icon="el-icon-search" @click="handleSearch"></el-button>
       </el-input>
     </div>
     
-    <!-- 分类导航 -->
-    <div class="category-nav">
-      <el-tag :type="activeCategory === null ? 'danger' : 'info'" @click="selectCategory(null)">全部</el-tag>
-      <el-tag v-for="cat in categories" :key="cat.id" 
-              :type="activeCategory === cat.id ? 'danger' : 'info'"
-              @click="selectCategory(cat.id)">
-        {{ cat.name }}
-      </el-tag>
-    </div>
-    
-    <!-- 榜单入口 -->
-    <div class="rank-entry">
-      <el-button type="warning" size="small" @click="showHotRank = true">
-        <i class="el-icon-trophy"></i> 热门TOP10
-      </el-button>
+    <!-- 分类导航与榜单入口 -->
+    <div class="top-controls">
+      <div class="category-nav">
+        <div class="nav-pill" :class="{ active: activeCategory === null }" @click="selectCategory(null)">全部</div>
+        <div class="nav-pill" v-for="cat in categories" :key="cat.id" 
+             :class="{ active: activeCategory === cat.id }"
+             @click="selectCategory(cat.id)">
+          {{ cat.name }}
+        </div>
+      </div>
+      <div class="rank-entry">
+        <el-button round icon="el-icon-trophy" @click="showHotRank = true">热门排行</el-button>
+      </div>
     </div>
     
     <!-- 菜品列表标题 -->
@@ -37,12 +36,22 @@
           <img :src="getImageUrl(food.image)" :alt="food.name">
         </div>
         <div class="food-info">
-          <h3>{{ food.name }}</h3>
-          <p class="category">{{ food.categoryName }}</p>
+          <div class="info-top">
+            <div class="name-row">
+              <h3>{{ food.name }}</h3>
+              <span class="category">{{ food.categoryName }}</span>
+            </div>
+            <p class="description">{{ food.description }}</p>
+            <div class="food-stats">
+              <span><i class="el-icon-sold-out"></i> 销量 {{ food.orderCount }}</span>
+              <span><i class="el-icon-star-on"></i> 好评数 {{ food.praiseCount }}</span>
+            </div>
+          </div>
           <div class="price-row">
             <span class="price">¥{{ food.price }}</span>
-            <el-button type="primary" size="mini" icon="el-icon-shopping-cart-2" 
-                       @click.stop="addToCart(food)">加入购物车</el-button>
+            <div class="add-btn" @click.stop="addToCart(food)">
+              <i class="el-icon-shopping-cart-2"></i>
+            </div>
           </div>
         </div>
       </div>
@@ -64,6 +73,7 @@
         </div>
       </div>
     </el-dialog>
+    </div>
   </div>
 </template>
 
@@ -133,9 +143,7 @@ export default {
     },
     async loadRecommend() {
       try {
-        const { data } = await this.$axios.get('/food/recommend', {
-          params: { userId: this.userId }
-        })
+        const { data } = await this.$axios.get('/food/recommend')
         if (data.code === 200) {
           this.recommendFoods = data.data
         }
@@ -198,6 +206,11 @@ export default {
       this.$router.push(`/food/${id}`)
     },
     addToCart(food) {
+      if (!this.isLoggedIn) {
+        this.$message.warning('请先登录')
+        this.$router.push('/login')
+        return
+      }
       this.$store.dispatch('addToCart', {
         foodId: food.id,
         foodName: food.name,
@@ -207,68 +220,119 @@ export default {
       this.$message.success('已加入购物车')
     },
     getImageUrl(image) {
-      if (!image) return 'https://via.placeholder.com/200x150?text=No+Image'
+      if (!image) return require('@/assets/default-food.png')
       if (image.startsWith('http')) return image
-      return 'http://localhost:8080' + image
+      return 'http://localhost:8089' + image
     }
   }
 }
 </script>
 
 <style scoped>
+.home-container {
+  min-height: 100vh;
+}
 .home {
   max-width: 1200px;
   margin: 0 auto;
+  padding: 20px 0 60px;
 }
 
 .search-bar {
-  margin-bottom: 20px;
+  margin-bottom: 32px;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* 覆盖 el-input 样式以实现极致极简 */
+.search-bar >>> .el-input__inner {
+  border-radius: 980px;
+  background-color: #fff;
+  border: none;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+  height: 52px;
+  font-size: 16px;
+  color: #1d1d1f;
+  padding-left: 24px;
+}
+.search-bar >>> .el-input-group__append {
+  background-color: transparent;
+  border: none;
+  font-size: 20px;
+  color: #1d1d1f;
+  border-radius: 0 980px 980px 0;
+}
+
+.top-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-bottom: 40px;
 }
 
 .category-nav {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   flex-wrap: wrap;
-  margin-bottom: 20px;
 }
 
-.category-nav .el-tag {
+.nav-pill {
+  padding: 8px 20px;
+  border-radius: 980px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #1d1d1f;
+  background: #fff;
   cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+  transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 
-.rank-entry {
-  margin-bottom: 20px;
+.nav-pill:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.nav-pill.active {
+  background: #1d1d1f;
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
 }
 
 .section-title {
-  font-size: 20px;
-  font-weight: bold;
-  margin-bottom: 20px;
-  padding-left: 10px;
-  border-left: 4px solid #ff6b6b;
+  font-size: 28px;
+  font-weight: 700;
+  color: #1d1d1f;
+  margin-bottom: 24px;
+  letter-spacing: -0.5px;
 }
 
 .food-list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 20px;
+  gap: 32px;
 }
 
 .food-card {
   background: white;
-  border-radius: 10px;
+  border-radius: 24px;
   overflow: hidden;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
   cursor: pointer;
-  transition: transform 0.3s;
+  transition: all 0.4s cubic-bezier(0.25, 0.1, 0.25, 1);
+  display: flex;
+  flex-direction: column;
 }
 
 .food-card:hover {
-  transform: translateY(-5px);
+  transform: translateY(-6px) scale(1.01);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.08);
 }
 
 .food-image {
-  height: 180px;
+  height: 220px;
   overflow: hidden;
 }
 
@@ -276,21 +340,68 @@ export default {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 0.6s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+.food-card:hover .food-image img {
+  transform: scale(1.05);
 }
 
 .food-info {
-  padding: 15px;
+  padding: 24px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
-.food-info h3 {
-  margin: 0 0 10px;
-  font-size: 16px;
+.name-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 6px;
 }
 
-.food-info .category {
-  color: #999;
-  font-size: 12px;
+.name-row h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1d1d1f;
+}
+
+.name-row .category {
+  color: #86868b;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.info-top .description {
+  color: #6e6e73;
+  font-size: 13px;
+  line-height: 1.4;
   margin-bottom: 10px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.food-stats {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+.food-stats span {
+  color: #86868b;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+.food-stats i {
+  font-size: 13px;
+  color: #ff9500;
 }
 
 .price-row {
@@ -300,50 +411,78 @@ export default {
 }
 
 .price {
-  color: #ff6b6b;
-  font-size: 20px;
+  color: #1d1d1f;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.add-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: #f5f5f7;
+  color: #1d1d1f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
   font-weight: bold;
+  transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+.food-card:hover .add-btn {
+  background-color: #0071e3;
+  color: #fff;
+}
+.add-btn:active {
+  transform: scale(0.9);
 }
 
 .hot-rank-list {
   max-height: 500px;
   overflow-y: auto;
+  padding: 0 10px;
 }
 
 .rank-item {
   display: flex;
   align-items: center;
-  padding: 10px;
-  border-bottom: 1px solid #eee;
+  padding: 16px;
+  margin-bottom: 12px;
+  border-radius: 16px;
+  background: #f5f5f7;
   cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 
 .rank-item:hover {
-  background: #f5f5f5;
+  transform: scale(1.01);
+  background: #e8e8ed;
 }
 
 .rank-num {
-  width: 30px;
-  height: 30px;
-  line-height: 30px;
+  width: 32px;
+  height: 32px;
+  line-height: 32px;
   text-align: center;
   border-radius: 50%;
-  background: #ddd;
-  color: white;
-  font-weight: bold;
-  margin-right: 15px;
+  background: #d2d2d7;
+  color: #fff;
+  font-weight: 700;
+  font-size: 14px;
+  margin-right: 16px;
 }
 
-.rank-num.top-1 { background: #ff6b6b; }
-.rank-num.top-2 { background: #ffa502; }
-.rank-num.top-3 { background: #ffd43b; }
+.rank-num.top-1 { background: #1d1d1f; }
+.rank-num.top-2 { background: #55555a; }
+.rank-num.top-3 { background: #86868b; }
 
 .rank-item img {
-  width: 60px;
-  height: 60px;
+  width: 64px;
+  height: 64px;
   object-fit: cover;
-  border-radius: 5px;
-  margin-right: 15px;
+  border-radius: 12px;
+  margin-right: 16px;
 }
 
 .rank-info {
@@ -351,17 +490,21 @@ export default {
 }
 
 .rank-info h4 {
-  margin: 0 0 5px;
+  margin: 0 0 4px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1d1d1f;
 }
 
 .rank-info p {
-  color: #999;
+  color: #86868b;
   font-size: 12px;
   margin: 0;
 }
 
 .rank-price {
-  color: #ff6b6b;
-  font-weight: bold;
+  color: #1d1d1f;
+  font-weight: 700;
+  font-size: 16px;
 }
 </style>

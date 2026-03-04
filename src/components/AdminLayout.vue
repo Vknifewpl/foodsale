@@ -87,26 +87,46 @@ export default {
 <style scoped>
 .admin-layout {
   display: flex;
+  background-image: url('@/assets/back.png');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  min-height: 100vh;
+}
+
+.admin-layout > .el-container {
+  margin-left: 240px;
+  width: calc(100% - 240px);
+  display: flex;
+  flex-direction: column;
 }
 
 .admin-header {
-  background: #fff;
-  padding: 0 20px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  height: 60px;
-  line-height: 60px;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  padding: 0 40px;
+  height: 72px !important;
+  line-height: 72px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
 }
 
 .header-content {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  height: 100%;
 }
 
 .admin-header h2 {
   margin: 0;
-  font-size: 18px;
-  color: #333;
+  font-size: 20px;
+  font-weight: 700;
+  color: #1d1d1f;
+  letter-spacing: -0.5px;
 }
 
 .user-info {
@@ -117,6 +137,18 @@ export default {
 
 .el-dropdown-link {
   cursor: pointer;
-  color: #409eff;
+  color: #1d1d1f;
+  font-size: 15px;
+  font-weight: 600;
+  transition: color 0.3s ease;
+}
+
+.el-dropdown-link:hover {
+  color: #0071e3;
+}
+
+.admin-main {
+  padding: 40px;
+  flex: 1;
 }
 </style>
