@@ -73,15 +73,29 @@
         </div>
       </div>
     </el-dialog>
+
+    <!-- AI推荐弹窗 -->
+    <AiRecommendPopup
+      :visible.sync="aiPopupVisible"
+      :food="aiRecommendFood"
+      :reason="aiRecommendReason"
+      @accept="acceptAiRecommend"
+    />
+
+    <!-- AI聊天助手 -->
+    <AiChatWidget :allFoods="foods" />
     </div>
   </div>
 </template>
 
 <script>
 import { mapState, mapGetters } from 'vuex'
+import AiRecommendPopup from '@/components/AiRecommendPopup.vue'
+import AiChatWidget from '@/components/AiChatWidget.vue'
 
 export default {
   name: 'Home',
+  components: { AiRecommendPopup, AiChatWidget },
   data() {
     return {
       searchKeyword: '',
@@ -91,7 +105,12 @@ export default {
       recommendFoods: [],
       hotFoods: [],
       loading: false,
-      showHotRank: false
+      showHotRank: false,
+      // AI推荐相关
+      aiPopupVisible: false,
+      aiRecommendFood: null,
+      aiRecommendReason: '',
+      aiLoading: false
     }
   },
   computed: {
@@ -218,6 +237,60 @@ export default {
         price: food.price
       })
       this.$message.success('已加入购物车')
+      // 触发AI推荐（购物车不同菜品种类<3时）
+      this.tryAiRecommend(food.id)
+    },
+    /** 尝试获取AI搭配推荐 */
+    async tryAiRecommend(addedFoodId) {
+      const cart = this.$store.state.cart
+      if (cart.length >= 3) return
+      if (this.aiLoading) return
+
+      this.aiLoading = true
+      // 显示加载中提示
+      const loadingNotify = this.$notify({
+        title: 'AI 助手',
+        message: '正在为您智能搭配中...',
+        iconClass: 'el-icon-loading',
+        duration: 0,
+        position: 'bottom-right',
+        customClass: 'ai-loading-notify'
+      })
+      try {
+        const cartFoodIds = cart.map(item => item.foodId)
+        const { data } = await this.$axios.post('/ai/recommend', {
+          currentAddedFoodId: addedFoodId,
+          cartFoodIds: cartFoodIds
+        })
+        loadingNotify.close()
+        if (data.code === 200 && data.data) {
+          const recommendId = data.data.recommendFoodId
+          const reason = data.data.reason
+          const allFoods = this.foods
+          const found = allFoods.find(f => f.id === recommendId)
+          if (found) {
+            this.aiRecommendFood = found
+            this.aiRecommendReason = reason || '这道菜与您的选择很搭哦！'
+            this.aiPopupVisible = true
+          }
+        }
+      } catch (e) {
+        loadingNotify.close()
+        console.error('AI推荐请求失败', e)
+      } finally {
+        this.aiLoading = false
+      }
+    },
+    /** 接受AI推荐，将推荐菜品加入购物车 */
+    acceptAiRecommend(food) {
+      if (!food) return
+      this.$store.dispatch('addToCart', {
+        foodId: food.id,
+        foodName: food.name,
+        foodImage: food.image,
+        price: food.price
+      })
+      this.$message.success(`已将「${food.name}」加入购物车`)
     },
     getImageUrl(image) {
       if (!image) return require('@/assets/default-food.png')
