@@ -105,12 +105,4 @@ export default {
   background-color: rgba(0, 113, 227, 0.08) !important;
   color: #0071e3 !important;
 }
-
-.sidebar >>> .logout-item {
-  margin-top: 24px;
-}
-.sidebar >>> .logout-item:hover {
-  color: #e30000 !important;
-  background-color: rgba(227, 0, 0, 0.04) !important;
-}
 </style>

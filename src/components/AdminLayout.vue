@@ -12,9 +12,6 @@
                 {{ currentUser.username }} <i class="el-icon-arrow-down el-icon--right"></i>
               </span>
               <el-dropdown-menu slot="dropdown">
-                <el-dropdown-item command="profile">
-                  <i class="el-icon-user"></i> 个人资料
-                </el-dropdown-item>
                 <el-dropdown-item command="password">
                   <i class="el-icon-lock"></i> 修改密码
                 </el-dropdown-item>
@@ -31,26 +28,6 @@
         <router-view />
       </el-main>
     </el-container>
-
-    <!-- 个人资料弹窗 -->
-    <el-dialog title="个人资料" :visible.sync="profileDialogVisible" width="400px">
-      <div class="profile-info">
-        <div class="profile-avatar">
-          <i class="el-icon-user-solid"></i>
-        </div>
-        <div class="profile-item">
-          <span class="profile-label">用户名</span>
-          <span class="profile-value">{{ currentUser.username }}</span>
-        </div>
-        <div class="profile-item">
-          <span class="profile-label">角色</span>
-          <span class="profile-value">管理员</span>
-        </div>
-      </div>
-      <div slot="footer">
-        <el-button @click="profileDialogVisible = false">关 闭</el-button>
-      </div>
-    </el-dialog>
 
     <!-- 修改密码弹窗 -->
     <el-dialog title="修改密码" :visible.sync="passwordDialogVisible" width="420px">
@@ -92,7 +69,6 @@ export default {
     }
     return {
       currentUser: {},
-      profileDialogVisible: false,
       passwordDialogVisible: false,
       pwdLoading: false,
       passwordForm: {
@@ -106,7 +82,7 @@ export default {
         ],
         newPassword: [
           { required: true, message: '请输入新密码', trigger: 'blur' },
-          { min: 3, message: '密码长度不能少于3位', trigger: 'blur' }
+          { min: 6, message: '密码长度不能少于6位', trigger: 'blur' }
         ],
         confirmPassword: [
           { required: true, message: '请再次输入新密码', trigger: 'blur' },
@@ -139,8 +115,6 @@ export default {
     handleCommand(command) {
       if (command === 'logout') {
         this.logout()
-      } else if (command === 'profile') {
-        this.profileDialogVisible = true
       } else if (command === 'password') {
         this.passwordForm = { oldPassword: '', newPassword: '', confirmPassword: '' }
         this.passwordDialogVisible = true
