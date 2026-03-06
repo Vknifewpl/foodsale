@@ -78,7 +78,9 @@ export default {
           if (data.code === 200) {
             this.$store.dispatch('login', data.data)
             this.$message.success('登录成功')
-            this.$router.push('/')
+            // 根据角色跳转：管理员去后台，普通用户去首页
+            const role = data.data.role
+            this.$router.push(role === 1 ? '/admin/food' : '/')
           } else {
             this.$message.error(data.msg)
             // 登录失败刷新验证码

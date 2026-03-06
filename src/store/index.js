@@ -9,6 +9,7 @@ export default new Vuex.Store({
     userId: localStorage.getItem('userId') || null,
     username: localStorage.getItem('username') || null,
     token: localStorage.getItem('token') || null,
+    role: Number(localStorage.getItem('role')) || 0,
     isNewUser: localStorage.getItem('isNewUser') === '1',
 
     // 购物车（会话级存储，数组结构，每项包含 foodId, foodName, foodImage, price, quantity）
@@ -17,21 +18,30 @@ export default new Vuex.Store({
 
   getters: {
     isLoggedIn: state => !!state.token,
+    isAdmin: state => state.role === 1,
     cartCount: state => state.cart.reduce((sum, item) => sum + item.quantity, 0),
     cartTotal: state => state.cart.reduce((sum, item) => sum + item.price * item.quantity, 0)
   },
 
   mutations: {
     // 设置用户信息
-    SET_USER(state, { userId, username, token, isNewUser }) {
+    SET_USER(state, { userId, username, token, role, isNewUser }) {
       state.userId = userId
       state.username = username
       state.token = token
+      state.role = role
       state.isNewUser = isNewUser === 1
       localStorage.setItem('userId', userId)
       localStorage.setItem('username', username)
       localStorage.setItem('token', token)
+      localStorage.setItem('role', role)
       localStorage.setItem('isNewUser', isNewUser)
+      // 管理员同步写入 admin_token，供路由守卫 requiresAdminAuth 使用
+      if (role === 1) {
+        localStorage.setItem('admin_token', token)
+      } else {
+        localStorage.removeItem('admin_token')
+      }
     },
 
     // 清除用户信息
@@ -39,11 +49,14 @@ export default new Vuex.Store({
       state.userId = null
       state.username = null
       state.token = null
+      state.role = 0
       state.isNewUser = false
       localStorage.removeItem('userId')
       localStorage.removeItem('username')
       localStorage.removeItem('token')
+      localStorage.removeItem('role')
       localStorage.removeItem('isNewUser')
+      localStorage.removeItem('admin_token')
     },
 
     // 更新新用户状态

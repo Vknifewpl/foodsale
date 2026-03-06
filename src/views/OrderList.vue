@@ -66,12 +66,20 @@
             立即支付
           </el-button>
           <el-button 
-            v-if="order.status == 1" 
+            v-if="order.status == 2 && !order.isCommented" 
             type="success" 
             size="small"
             @click="showCommentDialog(order)"
           >
             去评价
+          </el-button>
+          <el-button 
+            v-if="order.status == 2 && order.isCommented" 
+            type="warning" 
+            size="small"
+            @click="showCommentDetailDialog(order)"
+          >
+            查看评价
           </el-button>
           <el-button 
             type="info" 
@@ -86,29 +94,70 @@
       <el-empty v-if="!loading && orders.length === 0" description="暂无订单"></el-empty>
     </div>
 
+    <!-- 查看评价详情弹窗 -->
+    <el-dialog title="评价详情" :visible.sync="commentDetailDialogVisible" width="600px" class="comment-dialog">
+      <div class="comment-detail-list" v-loading="commentDetailLoading">
+        <div 
+          class="comment-detail-item" 
+          v-for="item in commentDetails" 
+          :key="item.id"
+        >
+          <div class="food-info">
+            <div class="food-image">
+              <img :src="getImageUrl(item.foodImage)" :alt="item.foodName" />
+            </div>
+            <div class="food-name">{{ item.foodName }}</div>
+          </div>
+          <div class="food-comment-detail">
+            <div class="comment-rating-row">
+              <span class="rating-label">评分：</span>
+              <el-rate v-model="item.rating" disabled></el-rate>
+            </div>
+            <div class="comment-content" v-if="item.content">
+              <span class="content-label">评价：</span>
+              <span class="content-text">{{ item.content }}</span>
+            </div>
+            <div class="comment-time">
+              <span class="time-text">{{ formatTime(item.createTime) }}</span>
+            </div>
+          </div>
+        </div>
+        <el-empty v-if="!commentDetailLoading && commentDetails.length === 0" description="暂无评价"></el-empty>
+      </div>
+      <div slot="footer">
+        <el-button @click="commentDetailDialogVisible = false">关闭</el-button>
+      </div>
+    </el-dialog>
+
     <!-- 评价弹窗 -->
-    <el-dialog title="评价菜品" :visible.sync="commentDialogVisible" width="500px">
-      <div v-if="commentOrder">
-        <div class="comment-food-select">
-          <el-select v-model="commentForm.foodId" placeholder="选择要评价的菜品" style="width: 100%">
-            <el-option
-              v-for="item in commentOrder.orderItems"
-              :key="item.foodId"
-              :label="item.foodName"
-              :value="item.foodId"
-            ></el-option>
-          </el-select>
+    <el-dialog title="评价菜品" :visible.sync="commentDialogVisible" width="600px" class="comment-dialog">
+      <div v-if="commentOrder" class="comment-food-list">
+        <div 
+          class="comment-food-item" 
+          v-for="(item, index) in commentForms" 
+          :key="item.foodId"
+        >
+          <div class="food-info">
+            <div class="food-image">
+              <img :src="getImageUrl(item.foodImage)" :alt="item.foodName" />
+            </div>
+            <div class="food-name">{{ item.foodName }}</div>
+          </div>
+          <div class="food-comment">
+            <div class="comment-rating-row">
+              <span class="rating-label">评分：</span>
+              <el-rate v-model="commentForms[index].rating"></el-rate>
+              <span class="rating-required">*</span>
+            </div>
+            <el-input
+              type="textarea"
+              :rows="2"
+              v-model="commentForms[index].content"
+              placeholder="请输入评价内容（可选）"
+              class="comment-input"
+            ></el-input>
+          </div>
         </div>
-        <div class="comment-rating" style="margin: 20px 0;">
-          <span>评分：</span>
-          <el-rate v-model="commentForm.rating"></el-rate>
-        </div>
-        <el-input
-          type="textarea"
-          :rows="4"
-          v-model="commentForm.content"
-          placeholder="请输入评价内容"
-        ></el-input>
       </div>
       <div slot="footer">
         <el-button @click="commentDialogVisible = false">取消</el-button>
@@ -128,12 +177,11 @@ export default {
       orders: [],
       commentDialogVisible: false,
       commentOrder: null,
-      commentForm: {
-        foodId: '',
-        rating: 5,
-        content: ''
-      },
-      commentSubmitting: false
+      commentForms: [],
+      commentSubmitting: false,
+      commentDetailDialogVisible: false,
+      commentDetails: [],
+      commentDetailLoading: false
     }
   },
   created() {
@@ -209,30 +257,37 @@ export default {
     },
     showCommentDialog(order) {
       this.commentOrder = order
-      this.commentForm = {
-        foodId: order.orderItems && order.orderItems.length > 0 ? order.orderItems[0].foodId : '',
+      // 为每个菜品初始化评价表单
+      this.commentForms = (order.orderItems || []).map(item => ({
+        foodId: item.foodId,
+        foodName: item.foodName,
+        foodImage: item.foodImage,
         rating: 5,
         content: ''
-      }
+      }))
       this.commentDialogVisible = true
     },
     async submitComment() {
-      if (!this.commentForm.foodId) {
-        this.$message.warning('请选择要评价的菜品')
-        return
-      }
-      if (!this.commentForm.content.trim()) {
-        this.$message.warning('请输入评价内容')
-        return
+      // 检查所有菜品是否都已评分
+      for (const item of this.commentForms) {
+        if (!item.rating || item.rating < 1) {
+          this.$message.warning(`请为「${item.foodName}」选择评分`)
+          return
+        }
       }
 
       this.commentSubmitting = true
       try {
-        const res = await this.$axios.post('/comment/add', {
-          foodId: this.commentForm.foodId,
+        // 批量提交评价
+        const comments = this.commentForms.map(item => ({
+          foodId: item.foodId,
+          rating: item.rating,
+          content: item.content || ''
+        }))
+        
+        const res = await this.$axios.post('/comment/addBatch', {
           orderId: this.commentOrder.id,
-          content: this.commentForm.content,
-          rating: this.commentForm.rating
+          comments: comments
         })
         if (res.data.code === 200) {
           this.$message.success('评价成功')
@@ -245,6 +300,25 @@ export default {
         this.$message.error('网络错误，请重试')
       } finally {
         this.commentSubmitting = false
+      }
+    },
+    async showCommentDetailDialog(order) {
+      this.commentDetailDialogVisible = true
+      this.commentDetailLoading = true
+      this.commentDetails = []
+      try {
+        const res = await this.$axios.get('/comment/order', {
+          params: { orderId: order.id }
+        })
+        if (res.data.code === 200) {
+          this.commentDetails = res.data.data || []
+        } else {
+          this.$message.error(res.data.msg || '获取评价详情失败')
+        }
+      } catch (e) {
+        this.$message.error('网络错误，请重试')
+      } finally {
+        this.commentDetailLoading = false
       }
     }
   }
@@ -476,16 +550,133 @@ export default {
   padding: 10px 24px;
 }
 
-.comment-food-select {
-  margin-bottom: 24px;
+.comment-food-list {
+  max-height: 400px;
+  overflow-y: auto;
 }
 
-.comment-rating {
+.comment-food-item {
   display: flex;
-  align-items: center;
   gap: 16px;
+  padding: 16px;
+  margin-bottom: 12px;
+  background: #f9f9f9;
+  border-radius: 12px;
+}
+
+.comment-food-item:last-child {
+  margin-bottom: 0;
+}
+
+.food-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 80px;
+  flex-shrink: 0;
+}
+
+.food-info .food-image {
+  width: 64px;
+  height: 64px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.food-info .food-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.food-info .food-name {
+  margin-top: 8px;
+  font-size: 13px;
   font-weight: 600;
   color: #1d1d1f;
+  text-align: center;
+  word-break: break-all;
+  line-height: 1.3;
+}
+
+.food-comment {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.comment-rating-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rating-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #666;
+}
+
+.rating-required {
+  color: #e30000;
+  font-weight: bold;
+}
+
+.comment-input >>> .el-textarea__inner {
+  border-radius: 8px;
+  resize: none;
+}
+
+.comment-dialog >>> .el-dialog__body {
+  padding: 16px 20px;
+}
+
+.comment-detail-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.comment-detail-item {
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+  margin-bottom: 12px;
+  background: #f9f9f9;
+  border-radius: 12px;
+}
+
+.comment-detail-item:last-child {
+  margin-bottom: 0;
+}
+
+.food-comment-detail {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.comment-content {
+  display: flex;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.content-label {
+  color: #666;
+  flex-shrink: 0;
+}
+
+.content-text {
+  color: #1d1d1f;
+  line-height: 1.5;
+}
+
+.comment-time {
+  font-size: 12px;
+  color: #999;
 }
 
 @media (max-width: 768px) {
