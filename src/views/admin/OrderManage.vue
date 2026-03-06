@@ -12,6 +12,8 @@
             <el-option label="待支付" value="0"></el-option>
             <el-option label="已支付" value="1"></el-option>
             <el-option label="已完成" value="2"></el-option>
+            <el-option label="退款申请中" value="3"></el-option>
+            <el-option label="已退款" value="4"></el-option>
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -44,7 +46,7 @@
             {{ scope.row.payTime ? formatTime(scope.row.payTime) : '-' }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="200">
+        <el-table-column label="操作" width="240">
           <template slot-scope="scope">
             <el-button size="mini" @click="viewOrderDetails(scope.row)">查看详情</el-button>
             <el-button 
@@ -54,6 +56,15 @@
               v-if="scope.row.status === 1"
             >
               完成订单
+            </el-button>
+            <!-- 退款申请中：同意退款按鈕 -->
+            <el-button
+              size="mini"
+              type="danger"
+              v-if="scope.row.status === 3"
+              @click="approveRefund(scope.row)"
+            >
+              同意退款
             </el-button>
           </template>
         </el-table-column>
@@ -185,7 +196,9 @@ export default {
       const statusMap = {
         0: '待支付',
         1: '已支付',
-        2: '已完成'
+        2: '已完成',
+        3: '退款申请中',
+        4: '已退款'
       }
       return statusMap[status] || '未知'
     },
@@ -193,7 +206,9 @@ export default {
       const typeMap = {
         0: 'warning',
         1: 'primary',
-        2: 'success'
+        2: 'success',
+        3: 'danger',
+        4: 'info'
       }
       return typeMap[status] || 'info'
     },
@@ -225,6 +240,27 @@ export default {
             this.fetchOrders()
           } else {
             this.$message.error(res.data.msg || '订单状态更新失败')
+          }
+        } catch (e) {
+          this.$message.error('网络错误，请重试')
+        }
+      })
+    },
+
+    /** 管理员同意退款 */
+    async approveRefund(order) {
+      this.$confirm(`确定同意订单 ${order.orderNo} 的退款申请？`, '审批退款', {
+        confirmButtonText: '同意退款',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(async () => {
+        try {
+          const res = await this.$axios.post('/admin/order/approve-refund', { orderNo: order.orderNo })
+          if (res.data.code === 200) {
+            this.$message.success('退款已处理成功')
+            this.fetchOrders()
+          } else {
+            this.$message.error(res.data.msg || '退款处理失败')
           }
         } catch (e) {
           this.$message.error('网络错误，请重试')

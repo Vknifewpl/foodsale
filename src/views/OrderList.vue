@@ -10,6 +10,8 @@
         <el-tab-pane label="待支付" name="0"></el-tab-pane>
         <el-tab-pane label="已支付" name="1"></el-tab-pane>
         <el-tab-pane label="已完成" name="2"></el-tab-pane>
+        <el-tab-pane label="退款申请中" name="3"></el-tab-pane>
+        <el-tab-pane label="已退款" name="4"></el-tab-pane>
       </el-tabs>
     </div>
     
@@ -57,6 +59,7 @@
         </div>
         
         <div class="order-actions">
+          <!-- 待支付：立即支付 -->
           <el-button 
             v-if="order.status == 0" 
             type="primary" 
@@ -65,6 +68,18 @@
           >
             立即支付
           </el-button>
+          <!-- 已支付/已完成：申请退款 -->
+          <el-button
+            v-if="order.status == 1 || order.status == 2"
+            type="warning"
+            size="small"
+            @click="applyRefund(order.orderNo)"
+          >
+            申请退款
+          </el-button>
+          <!-- 退款申请中：只读状态标签 -->
+          <span v-if="order.status == 3" class="refund-pending-tag">退款审核中，请等待</span>
+          <!-- 已完成：去评价 / 查看评价 -->
           <el-button 
             v-if="order.status == 2 && !order.isCommented" 
             type="success" 
@@ -185,6 +200,11 @@ export default {
     }
   },
   created() {
+    // 支持从路由 query 初始化 tab（如支付取消后跳转到待支付）
+    const statusQuery = this.$route.query.status
+    if (statusQuery !== undefined) {
+      this.activeStatus = statusQuery
+    }
     this.fetchOrders()
   },
   methods: {
@@ -226,7 +246,9 @@ export default {
       const statusMap = {
         0: '待支付',
         1: '已支付',
-        2: '已完成'
+        2: '已完成',
+        3: '退款申请中',
+        4: '已退款'
       }
       return statusMap[status] || '未知'
     },
@@ -240,17 +262,44 @@ export default {
       return new Date(time).toLocaleString()
     },
     async payOrder(orderNo) {
-      try {
-        const res = await this.$axios.post('/order/pay', { orderNo })
-        if (res.data.code === 200) {
-          this.$message.success('支付成功')
-          this.fetchOrders()
-        } else {
-          this.$message.error(res.data.msg || '支付失败')
+      this.$confirm('确认立即支付该订单？', '支付确认', {
+        confirmButtonText: '确认支付',
+        cancelButtonText: '取消',
+        type: 'info'
+      }).then(async () => {
+        try {
+          const res = await this.$axios.post('/order/pay', { orderNo })
+          if (res.data.code === 200) {
+            this.$message.success('支付成功')
+            this.fetchOrders()
+          } else {
+            this.$message.error(res.data.msg || '支付失败')
+          }
+        } catch (e) {
+          this.$message.error('网络错误，请重试')
         }
-      } catch (e) {
-        this.$message.error('网络错误，请重试')
-      }
+      }).catch(() => {})
+    },
+
+    /** 申请退款 */
+    applyRefund(orderNo) {
+      this.$confirm('确认申请退款？退款需管理员审批后处理。', '申请退款', {
+        confirmButtonText: '确认申请',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(async () => {
+        try {
+          const res = await this.$axios.post('/order/refund', { orderNo })
+          if (res.data.code === 200) {
+            this.$message.success('退款申请已提交，请等待管理员审批')
+            this.fetchOrders()
+          } else {
+            this.$message.error(res.data.msg || '退款申请失败')
+          }
+        } catch (e) {
+          this.$message.error('网络错误，请重试')
+        }
+      }).catch(() => {})
     },
     viewOrder(orderNo) {
       this.$router.push(`/order/${orderNo}`)
@@ -455,6 +504,24 @@ export default {
 .status-2 {
   background: rgba(0, 113, 227, 0.08);
   color: #0071e3;
+}
+
+.status-3 {
+  background: rgba(255, 153, 0, 0.12);
+  color: #e6820a;
+}
+
+.status-4 {
+  background: rgba(0, 0, 0, 0.06);
+  color: #86868b;
+}
+
+/* 退款审核中标签 */
+.refund-pending-tag {
+  font-size: 13px;
+  font-weight: 600;
+  color: #e6820a;
+  padding: 4px 0;
 }
 
 .order-body {

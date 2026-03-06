@@ -57,6 +57,27 @@
         </div>
       </div>
     </div>
+
+    <!-- 支付确认弹窗：订单已创建，引导用户确认或取消 -->
+    <el-dialog
+      title="确认支付"
+      :visible.sync="payDialogVisible"
+      width="420px"
+      :close-on-click-modal="false"
+      :show-close="false"
+      center
+    >
+      <div class="pay-dialog-body">
+        <i class="el-icon-bank-card pay-icon"></i>
+        <p class="pay-amount">¥{{ totalAmount.toFixed(2) }}</p>
+        <p class="pay-tip">订单已创建，请确认是否立即支付</p>
+        <p class="pay-order-no">订单号：{{ pendingOrderNo }}</p>
+      </div>
+      <div slot="footer" class="pay-dialog-footer">
+        <el-button @click="cancelPay" :loading="cancelling">取消支付</el-button>
+        <el-button type="primary" @click="confirmPay" :loading="paying">确认支付</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -66,7 +87,12 @@ export default {
   data() {
     return {
       orderItems: [],
-      submitting: false
+      submitting: false,
+      // 支付确认弹窗状态
+      payDialogVisible: false,
+      pendingOrderNo: '',
+      paying: false,
+      cancelling: false
     }
   },
   computed: {
@@ -74,7 +100,7 @@ export default {
       return this.orderItems.reduce((sum, item) => sum + (item.price * item.quantity), 0)
     },
     totalAmount() {
-      return this.subtotal // 配送费为0
+      return this.subtotal
     }
   },
   created() {
@@ -87,7 +113,6 @@ export default {
       return 'http://localhost:8089' + image
     },
     loadOrderItems() {
-      // 从购物车获取数据
       if (this.$route.query.fromCart === 'true') {
         this.orderItems = this.$store.state.cart.map(item => ({
           foodId: item.foodId,
@@ -97,10 +122,11 @@ export default {
           quantity: item.quantity
         }))
       } else {
-        // 直接下单场景（暂不支持）
         this.orderItems = []
       }
     },
+
+    /** 第一步：提交订单，创建待支付记录，弹出确认框 */
     async submitOrder() {
       const token = localStorage.getItem('token')
       if (!token) {
@@ -108,7 +134,6 @@ export default {
         this.$router.push('/login')
         return
       }
-
       if (this.orderItems.length === 0) {
         this.$message.warning('订单不能为空')
         return
@@ -116,7 +141,6 @@ export default {
 
       this.submitting = true
       try {
-        // 提交订单（userId由后端从Token获取）
         const orderData = {
           orderItems: this.orderItems.map(item => ({
             foodId: item.foodId,
@@ -127,22 +151,11 @@ export default {
             subtotal: parseFloat((item.price * item.quantity).toFixed(2))
           }))
         }
-
         const res = await this.$axios.post('/order/submit', orderData)
         if (res.data.code === 200) {
-          const orderNo = res.data.data.orderNo
-          
-          // 模拟支付
-          const payRes = await this.$axios.post('/order/pay', { orderNo })
-          if (payRes.data.code === 200) {
-            // 清空购物车
-            this.$store.commit('CLEAR_CART')
-            
-            this.$message.success('订单提交成功！')
-            this.$router.push(`/order/${orderNo}`)
-          } else {
-            this.$message.error(payRes.data.msg || '支付失败')
-          }
+          this.pendingOrderNo = res.data.data.orderNo
+          // 打开支付确认弹窗
+          this.payDialogVisible = true
         } else {
           this.$message.error(res.data.msg || '订单提交失败')
         }
@@ -150,6 +163,37 @@ export default {
         this.$message.error('网络错误，请重试')
       } finally {
         this.submitting = false
+      }
+    },
+
+    /** 取消支付：订单保留为待支付状态，跳转到待支付 tab */
+    async cancelPay() {
+      this.cancelling = true
+      this.payDialogVisible = false
+      this.cancelling = false
+      this.$message.info('已取消支付，订单保留为待支付状态')
+      // 清空购物车（已生成订单，不再需要），跳转到待支付列表
+      this.$store.commit('CLEAR_CART')
+      this.$router.push({ path: '/orders', query: { status: '0' } })
+    },
+
+    /** 确认支付：调用支付接口，成功后跳转详情 */
+    async confirmPay() {
+      this.paying = true
+      try {
+        const payRes = await this.$axios.post('/order/pay', { orderNo: this.pendingOrderNo })
+        if (payRes.data.code === 200) {
+          this.$store.commit('CLEAR_CART')
+          this.payDialogVisible = false
+          this.$message.success('支付成功！')
+          this.$router.push(`/order/${this.pendingOrderNo}`)
+        } else {
+          this.$message.error(payRes.data.msg || '支付失败')
+        }
+      } catch (e) {
+        this.$message.error('网络错误，请重试')
+      } finally {
+        this.paying = false
       }
     }
   }
@@ -346,6 +390,52 @@ export default {
   font-size: 16px;
   font-weight: 600;
   box-shadow: 0 8px 24px rgba(0, 113, 227, 0.3);
+}
+
+/* 支付确认弹窗 */
+.pay-dialog-body {
+  text-align: center;
+  padding: 8px 0 16px;
+}
+
+.pay-icon {
+  font-size: 52px;
+  color: #0071e3;
+  display: block;
+  margin-bottom: 16px;
+}
+
+.pay-amount {
+  font-size: 36px;
+  font-weight: 700;
+  color: #1d1d1f;
+  margin: 0 0 8px 0;
+  letter-spacing: -1px;
+}
+
+.pay-tip {
+  font-size: 15px;
+  color: #86868b;
+  margin: 0 0 8px 0;
+}
+
+.pay-order-no {
+  font-size: 13px;
+  color: #c0c4cc;
+  margin: 0;
+}
+
+.pay-dialog-footer {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.pay-dialog-footer .el-button {
+  flex: 1;
+  height: 44px;
+  font-weight: 600;
+  border-radius: 980px;
 }
 
 @media (max-width: 768px) {

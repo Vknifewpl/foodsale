@@ -106,7 +106,7 @@ const router = new VueRouter({
 router.beforeEach((to, from, next) => {
   const token = localStorage.getItem('token')
   const adminToken = localStorage.getItem('admin_token')
-  
+
   if (to.meta.requiresAuth && !token) {
     next('/login')
   } else if (to.meta.requiresAdminAuth && !adminToken) {
@@ -114,6 +114,13 @@ router.beforeEach((to, from, next) => {
   } else {
     next()
   }
+})
+
+// 动态浏览器标题：根据当前路由和用户角色切换"用户端"/"管理端"
+router.afterEach((to) => {
+  const isAdminRoute = to.path.startsWith('/admin')
+  const role = Number(localStorage.getItem('role') || 0)
+  document.title = (isAdminRoute || role === 1) ? '管理端' : '用户端'
 })
 
 export default router
