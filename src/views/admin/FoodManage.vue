@@ -112,7 +112,7 @@
             <img v-if="foodForm.image" :src="getImageUrl(foodForm.image)" class="avatar">
             <i v-else class="el-icon-plus avatar-uploader-icon"></i>
           </el-upload>
-          <div class="upload-tip">只能上传jpg/png文件，且不超过2MB</div>
+          <div class="upload-tip">只能上传JPG/PNG/GIF/WEBP等图片格式，无大小限制</div>
         </el-form-item>
       </el-form>
       
@@ -384,16 +384,12 @@ export default {
       }
     },
     beforeAvatarUpload(file) {
-      const isJPG = file.type === 'image/jpeg' || file.type === 'image/png'
-      const isLt2M = file.size / 1024 / 1024 < 2
+      const isImage = file.type === 'image/jpeg' || file.type === 'image/png' || file.type === 'image/gif' || file.type === 'image/webp'
 
-      if (!isJPG) {
-        this.$message.error('上传头像图片只能是 JPG/PNG 格式!')
+      if (!isImage) {
+        this.$message.error('只能上传图片文件(JPG/PNG/GIF/WEBP等格式)!')
       }
-      if (!isLt2M) {
-        this.$message.error('上传头像图片大小不能超过 2MB!')
-      }
-      return isJPG && isLt2M
+      return isImage
     },
     getImageUrl(image) {
       if (!image) return require('@/assets/default-food.png')

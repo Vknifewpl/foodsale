@@ -51,8 +51,20 @@
         <el-form-item label="描述">
           <el-input v-model="form.description" type="textarea" :rows="3" />
         </el-form-item>
-        <el-form-item label="图片URL">
-          <el-input v-model="form.image" placeholder="/images/xxx.jpg" />
+        <el-form-item label="菜品图片">
+          <el-upload
+            class="avatar-uploader"
+            :action="uploadUrl"
+            :show-file-list="false"
+            :on-success="handleAvatarSuccess"
+            :before-upload="beforeAvatarUpload"
+            :headers="uploadHeaders"
+            name="file"
+          >
+            <img v-if="form.image" :src="getImg(form.image)" class="avatar">
+            <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+          </el-upload>
+          <div class="upload-tip">只能上传JPG/PNG/GIF/WEBP等图片格式，无大小限制</div>
         </el-form-item>
       </el-form>
       <div slot="footer">
@@ -78,6 +90,16 @@ export default {
         categoryId: [{ required: true, message: '请选择分类', trigger: 'change' }],
         price: [{ required: true, message: '请输入价格', trigger: 'blur' }]
       }
+    }
+  },
+  computed: {
+    uploadHeaders() {
+      return {
+        Authorization: `Bearer ${localStorage.getItem('super_token') || ''}`
+      }
+    },
+    uploadUrl() {
+      return process.env.VUE_APP_UPLOAD_URL || 'http://localhost:8089/file/upload'
     }
   },
   created() { this.loadCategories(); this.loadData() },
@@ -129,6 +151,21 @@ export default {
         if (data.code === 200) { this.$message.success('删除成功'); this.loadData() }
         else this.$message.error(data.msg)
       })
+    },
+    handleAvatarSuccess(res, file) {
+      if (res.code === 200) {
+        this.form.image = res.data.url
+        this.$message.success('图片上传成功')
+      } else {
+        this.$message.error(res.msg || '图片上传失败')
+      }
+    },
+    beforeAvatarUpload(file) {
+      const isImage = file.type === 'image/jpeg' || file.type === 'image/png' || file.type === 'image/gif' || file.type === 'image/webp'
+      if (!isImage) {
+        this.$message.error('只能上传图片文件(JPG/PNG/GIF/WEBP等格式)!')
+      }
+      return isImage
     }
   }
 }
@@ -138,4 +175,41 @@ export default {
 .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
 .search-area { display: flex; gap: 12px; }
 .pagination { margin-top: 20px; text-align: right; }
+
+.avatar-uploader .el-upload {
+  border: 2px dashed rgba(0, 0, 0, 0.1);
+  border-radius: 16px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s;
+  background: #f5f5f7;
+}
+
+.avatar-uploader .el-upload:hover {
+  border-color: #0071e3;
+  background: rgba(0, 113, 227, 0.04);
+}
+
+.avatar-uploader-icon {
+  font-size: 28px;
+  color: #86868b;
+  width: 178px;
+  height: 178px;
+  line-height: 178px;
+  text-align: center;
+}
+
+.avatar {
+  width: 178px;
+  height: 178px;
+  display: block;
+}
+
+.upload-tip {
+  font-size: 13px;
+  color: #86868b;
+  margin-top: 8px;
+  font-weight: 500;
+}
 </style>
