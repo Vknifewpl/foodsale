@@ -102,6 +102,28 @@ const router = new VueRouter({
   routes
 })
 
+// 全局修复 Vue Router 3.x 重复导航报错问题
+// NavigationDuplicated 属于预期行为（已在当前页面），静默处理即可
+const originalPush = VueRouter.prototype.push
+VueRouter.prototype.push = function push(location, onResolve, onReject) {
+  if (onResolve || onReject) {
+    return originalPush.call(this, location, onResolve, onReject)
+  }
+  return originalPush.call(this, location).catch(err => {
+    if (err.name !== 'NavigationDuplicated') throw err
+  })
+}
+
+const originalReplace = VueRouter.prototype.replace
+VueRouter.prototype.replace = function replace(location, onResolve, onReject) {
+  if (onResolve || onReject) {
+    return originalReplace.call(this, location, onResolve, onReject)
+  }
+  return originalReplace.call(this, location).catch(err => {
+    if (err.name !== 'NavigationDuplicated') throw err
+  })
+}
+
 // 路由守卫
 router.beforeEach((to, from, next) => {
   const token = localStorage.getItem('token')
