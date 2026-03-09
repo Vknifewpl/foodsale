@@ -48,11 +48,11 @@ export default {
     ...mapGetters(['isLoggedIn', 'cartCount']),
     ...mapState(['username']),
     showHeader() {
-      // 登录、注册、管理员相关页面不显示用户端导航栏
-      const hiddenRoutes = ['Login', 'Register', 'AdminLogin']
+      // 登录、注册、管理员、超级管理员相关页面不显示用户端导航栏
+      const hiddenRoutes = ['Login', 'Register', 'AdminLogin', 'SuperLogin']
       if (hiddenRoutes.includes(this.$route.name)) return false
-      // 管理员后台页面不显示用户端导航栏
-      if (this.$route.path.startsWith('/admin')) return false
+      // 管理员和超管后台页面不显示用户端导航栏
+      if (this.$route.path.startsWith('/admin') || this.$route.path.startsWith('/super')) return false
       return true
     }
   },

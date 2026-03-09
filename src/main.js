@@ -14,7 +14,13 @@ axios.defaults.baseURL = 'http://localhost:8089'
 // 请求拦截器：根据请求路径选择携带用户端token或管理员token
 axios.interceptors.request.use(config => {
   const url = config.url || ''
-  if (url.startsWith('/admin')) {
+  if (url.startsWith('/super')) {
+    // 超级管理端请求使用 super_token
+    const superToken = localStorage.getItem('super_token')
+    if (superToken) {
+      config.headers.Authorization = `Bearer ${superToken}`
+    }
+  } else if (url.startsWith('/admin')) {
     // 管理员端请求使用admin_token
     const adminToken = localStorage.getItem('admin_token')
     if (adminToken) {
@@ -36,7 +42,12 @@ axios.interceptors.response.use(
   error => {
     if (error.response && error.response.status === 401) {
       const url = error.config.url || ''
-      if (url.startsWith('/admin')) {
+      if (url.startsWith('/super')) {
+        // 超级管理端Token失效
+        localStorage.removeItem('super_token')
+        localStorage.removeItem('super_user')
+        router.push('/super/login')
+      } else if (url.startsWith('/admin')) {
         // 管理员端Token失效
         localStorage.removeItem('admin_token')
         localStorage.removeItem('admin_user')

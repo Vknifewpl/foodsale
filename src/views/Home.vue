@@ -23,10 +23,18 @@
       </div>
     </div>
     
-    <!-- 菜品列表标题 -->
-    <div class="section-title">
-      <span v-if="isNewUser || !isLoggedIn">好评排行榜</span>
-      <span v-else>为您推荐</span>
+    <!-- 菜品列表标题 + 排序 Tab（新用户/未登录时显示） -->
+    <div class="section-header">
+      <div class="section-title">
+        <span v-if="isNewUser || !isLoggedIn">{{ sortLabel }}</span>
+        <span v-else>为您推荐</span>
+      </div>
+      <div class="sort-tabs" v-if="isNewUser || !isLoggedIn">
+        <span class="sort-tab" :class="{ active: sortType === 'praise' }" @click="changeSort('praise')">好评排行</span>
+        <span class="sort-tab" :class="{ active: sortType === 'price-asc' }" @click="changeSort('price-asc')">价格↑</span>
+        <span class="sort-tab" :class="{ active: sortType === 'price-desc' }" @click="changeSort('price-desc')">价格↓</span>
+        <span class="sort-tab" :class="{ active: sortType === 'sales' }" @click="changeSort('sales')">销量排行</span>
+      </div>
     </div>
     
     <!-- 菜品列表 -->
@@ -97,6 +105,8 @@ export default {
       hotFoods: [],
       loading: false,
       showHotRank: false,
+      // 排序类型: praise | price-asc | price-desc | sales
+      sortType: 'praise',
       // AI推荐相关
       aiLoading: false
     }
@@ -104,6 +114,16 @@ export default {
   computed: {
     ...mapState(['userId', 'isNewUser']),
     ...mapGetters(['isLoggedIn']),
+    /** 当前排序方式的标题 */
+    sortLabel() {
+      const labels = {
+        'praise': '好评排行榜',
+        'price-asc': '价格从低到高',
+        'price-desc': '价格从高到低',
+        'sales': '销量排行榜'
+      }
+      return labels[this.sortType] || '好评排行榜'
+    },
     displayFoods() {
       if (this.searchKeyword) {
         return this.foods
@@ -139,7 +159,11 @@ export default {
     async loadFoods() {
       this.loading = true
       try {
-        const { data } = await this.$axios.get('/food/praise-rank')
+        let url = '/food/praise-rank'
+        if (this.sortType === 'price-asc') url = '/food/price-rank?order=asc'
+        else if (this.sortType === 'price-desc') url = '/food/price-rank?order=desc'
+        else if (this.sortType === 'sales') url = '/food/sales-rank'
+        const { data } = await this.$axios.get(url)
         if (data.code === 200) {
           this.foods = data.data
         }
@@ -147,6 +171,13 @@ export default {
         console.error('加载菜品失败', error)
       }
       this.loading = false
+    },
+    /** 切换排序方式 */
+    changeSort(type) {
+      this.sortType = type
+      this.activeCategory = null
+      this.searchKeyword = ''
+      this.loadFoods()
     },
     async loadRecommend() {
       try {
@@ -348,12 +379,48 @@ export default {
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
 }
 
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
 .section-title {
   font-size: 28px;
   font-weight: 700;
   color: #1d1d1f;
-  margin-bottom: 24px;
   letter-spacing: -0.5px;
+}
+
+.sort-tabs {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.sort-tab {
+  padding: 6px 16px;
+  border-radius: 980px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #6e6e73;
+  background: #f5f5f7;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.25, 0.1, 0.25, 1);
+  user-select: none;
+}
+
+.sort-tab:hover {
+  background: #e8e8ed;
+  color: #1d1d1f;
+}
+
+.sort-tab.active {
+  background: #1d1d1f;
+  color: #fff;
 }
 
 .food-list {

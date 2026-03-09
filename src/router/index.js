@@ -93,6 +93,45 @@ const routes = [
         component: () => import('@/views/admin/Statistics.vue')
       }
     ]
+  },
+  // ===== 超级管理端路由 =====
+  {
+    path: '/super/login',
+    name: 'SuperLogin',
+    component: () => import('@/views/super/SuperLogin.vue'),
+    meta: { requiresAuth: false }
+  },
+  {
+    path: '/super',
+    component: () => import('@/components/SuperLayout.vue'),
+    meta: { requiresSuperAuth: true },
+    children: [
+      {
+        path: 'users',
+        name: 'SuperUsers',
+        component: () => import('@/views/super/UserManage.vue')
+      },
+      {
+        path: 'foods',
+        name: 'SuperFoods',
+        component: () => import('@/views/super/FoodManage.vue')
+      },
+      {
+        path: 'categories',
+        name: 'SuperCategories',
+        component: () => import('@/views/super/CategoryManage.vue')
+      },
+      {
+        path: 'orders',
+        name: 'SuperOrders',
+        component: () => import('@/views/super/OrderManage.vue')
+      },
+      {
+        path: 'comments',
+        name: 'SuperComments',
+        component: () => import('@/views/super/CommentManage.vue')
+      }
+    ]
   }
 ]
 
@@ -128,21 +167,28 @@ VueRouter.prototype.replace = function replace(location, onResolve, onReject) {
 router.beforeEach((to, from, next) => {
   const token = localStorage.getItem('token')
   const adminToken = localStorage.getItem('admin_token')
+  const superToken = localStorage.getItem('super_token')
 
   if (to.meta.requiresAuth && !token) {
     next('/login')
   } else if (to.meta.requiresAdminAuth && !adminToken) {
     next('/admin/login')
+  } else if (to.meta.requiresSuperAuth && !superToken) {
+    next('/super/login')
   } else {
     next()
   }
 })
 
-// 动态浏览器标题：根据当前路由和用户角色切换"用户端"/"管理端"
+// 动态浏览器标题：三端切换
 router.afterEach((to) => {
-  const isAdminRoute = to.path.startsWith('/admin')
-  const role = Number(localStorage.getItem('role') || 0)
-  document.title = (isAdminRoute || role === 1) ? '商家端' : '用户端'
+  if (to.path.startsWith('/super')) {
+    document.title = '超级管理端'
+  } else if (to.path.startsWith('/admin')) {
+    document.title = '商家端'
+  } else {
+    document.title = '用户端'
+  }
 })
 
 export default router

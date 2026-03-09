@@ -76,11 +76,25 @@ export default {
             captchaCode: this.form.captchaCode
           })
           if (data.code === 200) {
-            this.$store.dispatch('login', data.data)
+            const userData = data.data
+            this.$store.dispatch('login', userData)
             this.$message.success('登录成功')
-            // 根据角色跳转：管理员去后台，普通用户去首页
-            const role = data.data.role
-            this.$router.push(role === 1 ? '/admin/food' : '/')
+            // 根据角色跳往不同端，并同步隔离存储不同端的token
+            const role = Number(userData.role)
+            if (role === 2) {
+              // 超级管理员
+              localStorage.setItem('super_token', userData.token)
+              localStorage.setItem('super_user', JSON.stringify({ id: userData.userId, username: userData.username }))
+              this.$router.push('/super/users')
+            } else if (role === 1) {
+              // 商家管理员
+              localStorage.setItem('admin_token', userData.token)
+              localStorage.setItem('admin_user', JSON.stringify({ id: userData.userId, username: userData.username }))
+              this.$router.push('/admin/food')
+            } else {
+              // 普通用户
+              this.$router.push('/')
+            }
           } else {
             this.$message.error(data.msg)
             // 登录失败刷新验证码
