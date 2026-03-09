@@ -142,7 +142,7 @@ router.beforeEach((to, from, next) => {
 router.afterEach((to) => {
   const isAdminRoute = to.path.startsWith('/admin')
   const role = Number(localStorage.getItem('role') || 0)
-  document.title = (isAdminRoute || role === 1) ? '管理端' : '用户端'
+  document.title = (isAdminRoute || role === 1) ? '商家端' : '用户端'
 })
 
 export default router
