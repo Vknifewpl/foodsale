@@ -79,7 +79,7 @@
                     <div class="rc-add" @click="addFoodToCart(msg.food)">
                       <i class="el-icon-shopping-cart-2"></i> 加购
                     </div>
-                    <div class="rc-dismiss" @click="dismissFood(idx)">不要</div>
+                    <div class="rc-dismiss" @click="switchFood(idx, msg.food)"><i class="el-icon-refresh"></i> 更换</div>
                   </div>
                 </div>
               </div>
@@ -273,6 +273,17 @@ export default {
       this.chatOpen = true
       this.$nextTick(() => this.scrollToBottom())
     },
+    /** 构建对话历史（最近10轮），用于发送给后端保持上下文 */
+    buildChatHistory() {
+      // 过滤掉欢迎消息（第一条AI消息），只取真实对话
+      const realMessages = this.messages.slice(1)
+      // 限制最近10轮（20条消息），避免token爆炸
+      const recent = realMessages.slice(-20)
+      return recent.map(msg => ({
+        role: msg.role === 'ai' ? 'assistant' : 'user',
+        content: msg.text
+      }))
+    },
     async sendMessage() {
       const text = this.inputText.trim()
       if (!text || this.aiTyping) return
@@ -284,9 +295,12 @@ export default {
       this.aiTyping = true
       try {
         const cartFoodIds = this.$store.state.cart.map(item => item.foodId)
+        // 构建对话历史（不含本次用户消息，因为 message 字段已包含）
+        const chatHistory = this.buildChatHistory().slice(0, -1)
         const { data } = await this.$axios.post('/ai/chat', {
           message: text,
-          cartFoodIds
+          cartFoodIds,
+          chatHistory
         })
 
         let aiReply = '抱歉，我没有听懂，再说一遍吧～'
@@ -318,8 +332,15 @@ export default {
       })
       this.$message.success(`已将「${food.name}」加入购物车`)
     },
-    dismissFood(msgIndex) {
+    /** 更换推荐：隐藏当前卡片，自动发送换推荐请求 */
+    switchFood(msgIndex, food) {
       this.$set(this.messages[msgIndex], 'dismissed', true)
+      if (food && !this.aiTyping) {
+        // 自动发送换推荐请求
+        const switchMsg = `不想要${food.name}，换一个同类型的推荐`
+        this.inputText = switchMsg
+        this.sendMessage()
+      }
     },
     scrollToBottom() {
       this.$nextTick(() => {
