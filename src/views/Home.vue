@@ -134,7 +134,13 @@ export default {
       if (this.isNewUser || !this.isLoggedIn) {
         return this.foods
       }
-      return this.recommendFoods.length > 0 ? this.recommendFoods : this.foods
+      // 老用户：推荐菜品优先展示，再追加其余菜品（去重）
+      if (this.recommendFoods.length > 0) {
+        const recommendIds = new Set(this.recommendFoods.map(f => f.id))
+        const restFoods = this.foods.filter(f => !recommendIds.has(f.id))
+        return [...this.recommendFoods, ...restFoods]
+      }
+      return this.foods
     }
   },
   created() {
