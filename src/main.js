@@ -11,7 +11,8 @@ Vue.use(ElementUI)
 // 全局兜底：忽略弹窗取消和已被拦截器处理的 401，避免红色运行时遮罩
 window.addEventListener('unhandledrejection', (event) => {
   const reason = event.reason
-  if (reason === 'cancel' || reason === 'close' || reason?.message === 'cancel') {
+  const text = String(reason?.message ?? reason ?? '').toLowerCase()
+  if (text.includes('cancel') || text.includes('close')) {
     event.preventDefault()
     return
   }

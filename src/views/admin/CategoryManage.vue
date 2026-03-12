@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="category-manage-page">
     <div class="page-header">
       <h3>分类管理</h3>
@@ -140,6 +140,11 @@ export default {
         } catch (e) {
           this.$message.error('网络错误，请重试')
         }
+      }).catch(() => {}).finally(() => {
+        this.$nextTick(() => {
+          const active = document.activeElement
+          if (active && typeof active.blur === 'function') active.blur()
+        })
       })
     },
     handleClose(done) {

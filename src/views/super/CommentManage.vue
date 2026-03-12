@@ -127,7 +127,12 @@ export default {
         } else {
           this.$message.error(data.msg)
         }
-      }).catch(() => {})
+      }).catch(() => {}).finally(() => {
+        this.$nextTick(() => {
+          const active = document.activeElement
+          if (active && typeof active.blur === 'function') active.blur()
+        })
+      })
     }
   }
 }

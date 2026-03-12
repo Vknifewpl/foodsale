@@ -150,7 +150,12 @@ export default {
         const { data } = await this.$axios.delete(`/super/foods/${row.id}`)
         if (data.code === 200) { this.$message.success('删除成功'); this.loadData() }
         else this.$message.error(data.msg)
-      }).catch(() => {})
+      }).catch(() => {}).finally(() => {
+        this.$nextTick(() => {
+          const active = document.activeElement
+          if (active && typeof active.blur === 'function') active.blur()
+        })
+      })
     },
     handleAvatarSuccess(res, file) {
       if (res.code === 200) {
