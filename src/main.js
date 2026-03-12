@@ -8,6 +8,18 @@ import axios from 'axios'
 
 Vue.use(ElementUI)
 
+// 全局兜底：忽略弹窗取消和已被拦截器处理的 401，避免红色运行时遮罩
+window.addEventListener('unhandledrejection', (event) => {
+  const reason = event.reason
+  if (reason === 'cancel' || reason === 'close' || reason?.message === 'cancel') {
+    event.preventDefault()
+    return
+  }
+  if (reason?.response?.status === 401) {
+    event.preventDefault()
+  }
+})
+
 // 配置axios基础URL（与后端端口一致）
 axios.defaults.baseURL = 'http://localhost:8089'
 
@@ -46,12 +58,12 @@ axios.interceptors.response.use(
         // 超级管理端Token失效
         localStorage.removeItem('super_token')
         localStorage.removeItem('super_user')
-        router.push('/super/login')
+        router.push('/login')
       } else if (url.startsWith('/admin')) {
         // 管理员端Token失效
         localStorage.removeItem('admin_token')
         localStorage.removeItem('admin_user')
-        router.push('/admin/login')
+        router.push('/login')
       } else {
         // 用户端Token失效
         localStorage.removeItem('token')

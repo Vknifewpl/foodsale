@@ -36,12 +36,6 @@ export default new Vuex.Store({
       localStorage.setItem('token', token)
       localStorage.setItem('role', role)
       localStorage.setItem('isNewUser', isNewUser)
-      // 管理员同步写入 admin_token，供路由守卫 requiresAdminAuth 使用
-      if (role === 1) {
-        localStorage.setItem('admin_token', token)
-      } else {
-        localStorage.removeItem('admin_token')
-      }
     },
 
     // 清除用户信息
@@ -56,7 +50,6 @@ export default new Vuex.Store({
       localStorage.removeItem('token')
       localStorage.removeItem('role')
       localStorage.removeItem('isNewUser')
-      localStorage.removeItem('admin_token')
     },
 
     // 更新新用户状态

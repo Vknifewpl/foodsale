@@ -59,7 +59,7 @@ export default {
           localStorage.removeItem('super_token')
           localStorage.removeItem('super_user')
           this.$message.success('已退出登录')
-          this.$router.push('/super/login')
+          this.$router.push('/login')
         })
       }
     }

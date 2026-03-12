@@ -132,7 +132,7 @@ export default {
         localStorage.removeItem('admin_token')
         localStorage.removeItem('admin_user')
         this.$message.success('已退出登录')
-        this.$router.push('/admin/login')
+        this.$router.push('/login')
       })
     },
     submitChangePassword() {
@@ -151,7 +151,7 @@ export default {
             // 修改密码后自动退出登录
             localStorage.removeItem('admin_token')
             localStorage.removeItem('admin_user')
-            this.$router.push('/admin/login')
+            this.$router.push('/login')
           } else {
             this.$message.error(res.data.msg || '密码修改失败')
           }

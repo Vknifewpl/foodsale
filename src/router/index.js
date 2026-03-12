@@ -149,7 +149,7 @@ VueRouter.prototype.push = function push(location, onResolve, onReject) {
     return originalPush.call(this, location, onResolve, onReject)
   }
   return originalPush.call(this, location).catch(err => {
-    if (err.name !== 'NavigationDuplicated') throw err
+    if (err.name !== 'NavigationDuplicated' && err.name !== 'NavigationRedirected') throw err
   })
 }
 
@@ -159,22 +159,31 @@ VueRouter.prototype.replace = function replace(location, onResolve, onReject) {
     return originalReplace.call(this, location, onResolve, onReject)
   }
   return originalReplace.call(this, location).catch(err => {
-    if (err.name !== 'NavigationDuplicated') throw err
+    if (err.name !== 'NavigationDuplicated' && err.name !== 'NavigationRedirected') throw err
   })
 }
 
 // 路由守卫
 router.beforeEach((to, from, next) => {
   const token = localStorage.getItem('token')
+  const role = Number(localStorage.getItem('role'))
   const adminToken = localStorage.getItem('admin_token')
   const superToken = localStorage.getItem('super_token')
 
-  if (to.meta.requiresAuth && !token) {
+  if (to.meta.requiresAuth && (!token || role !== 0)) {
+    // 用户端只允许 role=0
+    if (role !== 0) {
+      localStorage.removeItem('token')
+      localStorage.removeItem('userId')
+      localStorage.removeItem('username')
+      localStorage.removeItem('role')
+      localStorage.removeItem('isNewUser')
+    }
     next('/login')
   } else if (to.meta.requiresAdminAuth && !adminToken) {
-    next('/admin/login')
+    next('/login')
   } else if (to.meta.requiresSuperAuth && !superToken) {
-    next('/super/login')
+    next('/login')
   } else {
     next()
   }
