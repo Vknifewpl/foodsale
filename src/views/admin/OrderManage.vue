@@ -244,7 +244,7 @@ export default {
         } catch (e) {
           this.$message.error('网络错误，请重试')
         }
-      })
+      }).catch(() => {})
     },
 
     /** 管理员同意退款 */
@@ -265,7 +265,7 @@ export default {
         } catch (e) {
           this.$message.error('网络错误，请重试')
         }
-      })
+      }).catch(() => {})
     },
     handleSizeChange(val) {
       this.pageSize = val

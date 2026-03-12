@@ -60,7 +60,7 @@ export default {
           localStorage.removeItem('super_user')
           this.$message.success('已退出登录')
           this.$router.push('/login')
-        })
+        }).catch(() => {})
       }
     }
   }

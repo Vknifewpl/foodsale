@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="category-manage-page">
     <div class="page-header">
       <h3>分类管理</h3>
@@ -121,7 +121,7 @@ export default {
         } else {
           return false
         }
-      })
+      }).catch(() => {})
     },
     async deleteCategory(id) {
       this.$confirm('此操作将永久删除该分类, 是否继续?', '提示', {

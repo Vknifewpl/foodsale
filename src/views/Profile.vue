@@ -114,7 +114,7 @@ export default {
         this.$store.dispatch('logout')
         this.$message.success('已退出登录')
         this.$router.push('/')
-      })
+      }).catch(() => {})
     }
   }
 }

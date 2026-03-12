@@ -84,7 +84,7 @@ export default {
         const { data } = await this.$axios.delete(`/super/categories/${row.id}`)
         if (data.code === 200) { this.$message.success('删除成功'); this.loadData() }
         else this.$message.error(data.msg)
-      })
+      }).catch(() => {})
     }
   }
 }
