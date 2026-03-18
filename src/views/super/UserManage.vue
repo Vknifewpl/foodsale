@@ -106,15 +106,7 @@ export default {
   computed: {
     dialogTitle() { return this.isAdd ? '新增用户' : '编辑用户' }
   },
-  created() {
-    const superToken = localStorage.getItem('super_token')
-    if (!superToken) {
-      this.$message.warning('请先登录')
-      this.$router.push('/super/login')
-      return
-    }
-    this.loadData()
-  },
+  created() { this.loadData() },
   methods: {
     async loadData() {
       this.loading = true

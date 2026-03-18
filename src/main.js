@@ -8,7 +8,7 @@ import axios from 'axios'
 
 Vue.use(ElementUI)
 
-// 全局兜底：忽略弹窗取消、已被拦截器处理的 401，以及浏览器扩展的 IO 错误，避免红色运行时遮罩
+// 全局兜底：忽略弹窗取消和已被拦截器处理的 401，避免红色运行时遮罩
 window.addEventListener('unhandledrejection', (event) => {
   const reason = event.reason
   const text = String(reason?.message ?? reason ?? '').toLowerCase()
@@ -17,16 +17,6 @@ window.addEventListener('unhandledrejection', (event) => {
     return
   }
   if (reason?.response?.status === 401) {
-    event.preventDefault()
-  }
-  if (text.includes('io error') || text.includes('manifest')) {
-    event.preventDefault()
-  }
-})
-
-window.addEventListener('error', (event) => {
-  const text = String(event.message ?? '').toLowerCase()
-  if (text.includes('io error') || text.includes('manifest')) {
     event.preventDefault()
   }
 })
@@ -69,12 +59,12 @@ axios.interceptors.response.use(
         // 超级管理端Token失效
         localStorage.removeItem('super_token')
         localStorage.removeItem('super_user')
-        router.push('/super/login')
+        router.push('/login')
       } else if (url.startsWith('/admin')) {
         // 管理员端Token失效
         localStorage.removeItem('admin_token')
         localStorage.removeItem('admin_user')
-        router.push('/admin/login')
+        router.push('/login')
       } else {
         // 用户端Token失效
         localStorage.removeItem('token')

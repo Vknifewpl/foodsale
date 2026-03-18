@@ -51,15 +51,7 @@ export default {
       tableData: [], page: 1, size: 10, total: 0
     }
   },
-  created() {
-    const superToken = localStorage.getItem('super_token')
-    if (!superToken) {
-      this.$message.warning('请先登录')
-      this.$router.push('/super/login')
-      return
-    }
-    this.loadData()
-  },
+  created() { this.loadData() },
   methods: {
     async loadData() {
       this.loading = true

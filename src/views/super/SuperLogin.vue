@@ -69,11 +69,10 @@ export default {
 }
 .login-card {
   background: white;
-  border-radius: 32px;
-  padding: 143px 32px;
-  width: 100%;
-  max-width: 420px;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.04);
+  border-radius: 24px;
+  padding: 48px 40px;
+  width: 400px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.3);
   text-align: center;
 }
 .login-icon {
@@ -84,11 +83,11 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 24px;
+  margin: 0 auto 20px;
 }
 .login-icon i { font-size: 36px; color: white; }
-h1 { margin: 0 0 12px; font-size: 26px; font-weight: 700; color: #1d1d1f; }
-.subtitle { color: #86868b; font-size: 14px; margin-bottom: 40px; }
-.el-form-item { margin-bottom: 20px; }
-.login-btn { width: 100%; height: 48px; font-size: 16px; font-weight: 600; border-radius: 12px; margin-top: 12px; }
+h1 { margin: 0 0 8px; font-size: 26px; font-weight: 700; color: #1d1d1f; }
+.subtitle { color: #86868b; font-size: 14px; margin-bottom: 32px; }
+.el-form-item { margin-bottom: 16px; }
+.login-btn { width: 100%; height: 48px; font-size: 16px; font-weight: 600; border-radius: 12px; margin-top: 8px; }
 </style>

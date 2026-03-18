@@ -1,15 +1,7 @@
 <template>
   <div class="register-container">
     <div class="register-box">
-      <div class="register-header">
-        <div class="header-icon">
-          <i class="el-icon-s-custom"></i>
-        </div>
-        <div class="header-text">
-          <h2>用户注册</h2>
-          <p>创建新账号</p>
-        </div>
-      </div>
+      <h2>用户注册</h2>
       <el-form ref="form" :model="form" :rules="rules" label-width="0">
         <el-form-item prop="username">
           <el-input v-model="form.username" placeholder="请输入用户名" prefix-icon="el-icon-user"></el-input>
@@ -99,7 +91,10 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
-  background: linear-gradient(135deg, #ff5252 0%, #ff6b6b 50%, #ff9a9e 100%);
+  background-image: url('@/assets/back.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 .register-box {
@@ -109,48 +104,15 @@ export default {
   background: #fff;
   border-radius: 32px;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.04);
+}
+
+.register-box h2 {
   text-align: center;
-}
-
-.register-header {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-bottom: 32px;
-}
-
-.header-icon {
-  width: 72px;
-  height: 72px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #ff5252, #ff6b6b, #ff9a9e);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 20px;
-}
-
-.header-icon i {
-  font-size: 36px;
-  color: white;
-}
-
-.header-text h2 {
-  margin: 0 0 8px;
-  font-size: 26px;
-  font-weight: 700;
+  margin: 0 0 40px 0;
   color: #1d1d1f;
-}
-
-.header-text p {
-  margin: 0;
-  color: #86868b;
-  font-size: 15px;
-  font-weight: 500;
-}
-
-.el-form {
-  margin-top: 20px;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
 }
 
 .register-box >>> .el-input__inner {
@@ -183,15 +145,15 @@ export default {
   font-size: 18px;
   font-weight: 600;
   margin-top: 16px;
-  background: linear-gradient(135deg, #ff5252, #ff6b6b, #ff9a9e);
+  background: #0071e3;
   border: none;
-  box-shadow: 0 4px 14px rgba(255, 82, 82, 0.2);
+  box-shadow: 0 4px 14px rgba(0, 113, 227, 0.2);
   transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 .register-box >>> .el-button:hover {
-  background: linear-gradient(135deg, #ff6b6b, #ff5252);
+  background: #0077ed;
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(255, 82, 82, 0.3);
+  box-shadow: 0 6px 20px rgba(0, 113, 227, 0.3);
 }
 
 .tips {
