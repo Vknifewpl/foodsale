@@ -49,8 +49,15 @@ export default {
     }
   },
   created() {
-    const userStr = localStorage.getItem('super_user')
-    if (userStr) this.currentUser = JSON.parse(userStr)
+    try {
+      const userStr = localStorage.getItem('super_user')
+      if (userStr) {
+        this.currentUser = JSON.parse(userStr)
+      }
+    } catch (e) {
+      console.error('解析用户信息失败:', e)
+      this.currentUser = {}
+    }
   },
   methods: {
     handleCommand(cmd) {

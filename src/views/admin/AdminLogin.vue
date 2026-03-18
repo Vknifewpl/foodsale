@@ -84,13 +84,30 @@ export default {
           { required: true, message: '请输入验证码', trigger: 'blur' }
         ]
       },
-      loading: false
+      loading: false,
+      captchaTimer: null
     }
   },
   created() {
     this.loadCaptcha()
+    this.startCaptchaTimer()
+  },
+  beforeDestroy() {
+    this.stopCaptchaTimer()
   },
   methods: {
+    startCaptchaTimer() {
+      this.stopCaptchaTimer()
+      this.captchaTimer = setInterval(() => {
+        this.loadCaptcha()
+      }, 60000)
+    },
+    stopCaptchaTimer() {
+      if (this.captchaTimer) {
+        clearInterval(this.captchaTimer)
+        this.captchaTimer = null
+      }
+    },
     /** 获取验证码 */
     async loadCaptcha() {
       try {
