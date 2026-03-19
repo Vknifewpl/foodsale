@@ -181,9 +181,9 @@ router.beforeEach((to, from, next) => {
     }
     next('/login')
   } else if (to.meta.requiresAdminAuth && !adminToken) {
-    next('/login')
+    next('/admin/login')
   } else if (to.meta.requiresSuperAuth && !superToken) {
-    next('/login')
+    next('/super/login')
   } else {
     next()
   }

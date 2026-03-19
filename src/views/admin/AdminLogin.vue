@@ -1,9 +1,14 @@
 <template>
   <div class="admin-login-container">
-    <div class="login-form">
-      <div class="form-header">
-        <h2>管理员登录</h2>
-        <p>欢迎使用餐饮管理系统</p>
+    <div class="login-card">
+      <div class="login-header">
+        <div class="header-icon">
+          <i class="el-icon-s-custom"></i>
+        </div>
+        <div class="header-text">
+          <h1>商家管理端</h1>
+          <p>欢迎回来</p>
+        </div>
       </div>
       
       <el-form :model="form" :rules="rules" ref="form" @submit.native.prevent>
@@ -23,10 +28,10 @@
             placeholder="请输入密码" 
             prefix-icon="el-icon-lock"
             size="large"
+            show-password
           ></el-input>
         </el-form-item>
-
-        <!-- 验证码 -->
+        
         <el-form-item prop="captchaCode">
           <div class="captcha-row">
             <el-input 
@@ -54,7 +59,7 @@
       </el-form>
       
       <div class="login-footer">
-        <p>提示：仅限管理员账号登录</p>
+        <p>提示：仅限商家账号登录</p>
       </div>
     </div>
   </div>
@@ -84,14 +89,30 @@ export default {
           { required: true, message: '请输入验证码', trigger: 'blur' }
         ]
       },
-      loading: false
+      loading: false,
+      captchaTimer: null
     }
   },
   created() {
     this.loadCaptcha()
+    this.startCaptchaTimer()
+  },
+  beforeDestroy() {
+    this.stopCaptchaTimer()
   },
   methods: {
-    /** 获取验证码 */
+    startCaptchaTimer() {
+      this.stopCaptchaTimer()
+      this.captchaTimer = setInterval(() => {
+        this.loadCaptcha()
+      }, 60000)
+    },
+    stopCaptchaTimer() {
+      if (this.captchaTimer) {
+        clearInterval(this.captchaTimer)
+        this.captchaTimer = null
+      }
+    },
     async loadCaptcha() {
       try {
         const { data } = await this.$axios.get('/captcha')
@@ -103,7 +124,7 @@ export default {
         console.error('获取验证码失败', error)
       }
     },
-    async handleLogin() {
+    handleLogin() {
       this.$refs.form.validate(async (valid) => {
         if (!valid) return
         
@@ -148,35 +169,49 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-image: url('@/assets/back.png');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
 }
 
-.login-form {
-  width: 100%;
-  max-width: 480px;
-  background: #fff;
-  padding: 64px 48px;
-  border-radius: 32px;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.04);
-}
-
-.form-header {
+.login-card {
+  background: white;
+  border-radius: 24px;
+  padding: 58px 32px;
+  width: 420px;
+  box-shadow: 0 24px 60px rgba(102, 126, 234, 0.3);
   text-align: center;
-  margin-bottom: 40px;
 }
 
-.form-header h2 {
-  margin: 0 0 12px 0;
-  font-size: 28px;
+.login-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 32px;
+}
+
+.header-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #764ba2, #667eea);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+}
+
+.header-icon i {
+  font-size: 36px;
+  color: white;
+}
+
+.header-text h1 {
+  margin: 0 0 8px;
+  font-size: 26px;
   font-weight: 700;
-  letter-spacing: -0.5px;
   color: #1d1d1f;
 }
 
-.form-header p {
+.header-text p {
   margin: 0;
   color: #86868b;
   font-size: 15px;
@@ -187,7 +222,11 @@ export default {
   margin-top: 20px;
 }
 
-.login-form >>> .el-input__inner {
+.el-form-item {
+  margin-bottom: 16px;
+}
+
+.login-card >>> .el-input__inner {
   height: 56px;
   border-radius: 16px;
   background: #f5f5f7;
@@ -197,13 +236,14 @@ export default {
   color: #1d1d1f;
   transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
 }
-.login-form >>> .el-input__inner:focus {
+
+.login-card >>> .el-input__inner:focus {
   background: #fff;
   border-color: #0071e3;
   box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.1);
 }
 
-.login-form >>> .el-input__prefix {
+.login-card >>> .el-input__prefix {
   left: 16px;
   display: flex;
   align-items: center;
@@ -211,32 +251,33 @@ export default {
   font-size: 18px;
 }
 
-.login-form >>> .el-button {
+.login-card >>> .el-button {
   height: 56px;
   border-radius: 980px;
   font-size: 18px;
   font-weight: 600;
   margin-top: 16px;
-  background: #1d1d1f;
+  background: linear-gradient(135deg, #764ba2, #667eea);
   border: none;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 14px rgba(102, 126, 234, 0.15);
   transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
 }
-.login-form >>> .el-button:hover {
-  background: #333336;
+.login-card >>> .el-button:hover {
+  background: linear-gradient(135deg, #667eea, #764ba2);
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.2);
 }
 
-/* 验证码行 */
 .captcha-row {
   display: flex;
   align-items: center;
   gap: 12px;
 }
+
 .captcha-row .el-input {
   flex: 1;
 }
+
 .captcha-img {
   height: 56px;
   border-radius: 16px;
@@ -244,6 +285,7 @@ export default {
   flex-shrink: 0;
   transition: opacity 0.3s;
 }
+
 .captcha-img:hover {
   opacity: 0.7;
 }
@@ -262,8 +304,8 @@ export default {
   font-weight: 500;
 }
 
-@media (max-width: 768px) {
-  .login-form {
+@media (max-width: 480px) {
+  .login-card {
     margin: 16px;
     padding: 48px 32px;
   }
