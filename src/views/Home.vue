@@ -27,13 +27,15 @@
     <div class="section-header">
       <div class="section-title">
         <span v-if="isNewUser || !isLoggedIn">{{ sortLabel }}</span>
+        <span v-else-if="isSorting">{{ sortLabel }}</span>
         <span v-else>为您推荐</span>
       </div>
-      <div class="sort-tabs" v-if="isNewUser || !isLoggedIn">
-        <span class="sort-tab" :class="{ active: sortType === 'praise' }" @click="changeSort('praise')">好评排行</span>
-        <span class="sort-tab" :class="{ active: sortType === 'price-asc' }" @click="changeSort('price-asc')">价格↑</span>
-        <span class="sort-tab" :class="{ active: sortType === 'price-desc' }" @click="changeSort('price-desc')">价格↓</span>
-        <span class="sort-tab" :class="{ active: sortType === 'sales' }" @click="changeSort('sales')">销量排行</span>
+      <div class="sort-tabs">
+        <span v-if="!isNewUser && isLoggedIn && isSorting" class="sort-tab recommend-tab" @click="backToRecommend">为您推荐</span>
+        <span class="sort-tab" :class="{ active: sortType === 'praise' && (isNewUser || !isLoggedIn || isSorting) }" @click="changeSort('praise')">好评排行</span>
+        <span class="sort-tab" :class="{ active: sortType === 'price-asc' && (isNewUser || !isLoggedIn || isSorting) }" @click="changeSort('price-asc')">价格↑</span>
+        <span class="sort-tab" :class="{ active: sortType === 'price-desc' && (isNewUser || !isLoggedIn || isSorting) }" @click="changeSort('price-desc')">价格↓</span>
+        <span class="sort-tab" :class="{ active: sortType === 'sales' && (isNewUser || !isLoggedIn || isSorting) }" @click="changeSort('sales')">销量排行</span>
       </div>
     </div>
     
@@ -107,6 +109,8 @@ export default {
       showHotRank: false,
       // 排序类型: praise | price-asc | price-desc | sales
       sortType: 'praise',
+      // 是否处于排序模式（老用户点击排序后进入排序模式）
+      isSorting: false,
       // AI推荐相关
       aiLoading: false
     }
@@ -134,7 +138,9 @@ export default {
       if (this.isNewUser || !this.isLoggedIn) {
         return this.foods
       }
-      // 老用户：推荐菜品优先展示，再追加其余菜品（去重）
+      if (this.isSorting) {
+        return this.foods
+      }
       if (this.recommendFoods.length > 0) {
         const recommendIds = new Set(this.recommendFoods.map(f => f.id))
         const restFoods = this.foods.filter(f => !recommendIds.has(f.id))
@@ -183,7 +189,13 @@ export default {
       this.sortType = type
       this.activeCategory = null
       this.searchKeyword = ''
+      this.isSorting = true
       this.loadFoods()
+    },
+    backToRecommend() {
+      this.isSorting = false
+      this.activeCategory = null
+      this.searchKeyword = ''
     },
     async loadRecommend() {
       try {
@@ -426,6 +438,17 @@ export default {
 
 .sort-tab.active {
   background: #1d1d1f;
+  color: #fff;
+}
+
+.recommend-tab {
+  background: linear-gradient(135deg, #ff6b6b, #ff8e53);
+  color: #fff;
+  font-weight: 600;
+}
+
+.recommend-tab:hover {
+  background: linear-gradient(135deg, #ff5252, #ff7043);
   color: #fff;
 }
 

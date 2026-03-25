@@ -77,9 +77,8 @@ export default {
             password: this.form.password
           })
           if (data.code === 200) {
-            this.$store.dispatch('login', data.data)
-            this.$message.success('注册成功')
-            this.$router.push('/')
+            this.$message.success('注册成功，请登录')
+            this.$router.push('/login')
           } else {
             this.$message.error(data.msg)
           }
@@ -99,7 +98,7 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
-  background: linear-gradient(135deg, #ff5252 0%, #ff6b6b 50%, #ff9a9e 100%);
+  background: linear-gradient(135deg, #409eff 0%, #66b1ff 50%, #a0cfff 100%);
 }
 
 .register-box {
@@ -123,7 +122,7 @@ export default {
   width: 72px;
   height: 72px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #ff5252, #ff6b6b, #ff9a9e);
+  background: linear-gradient(135deg, #409eff, #66b1ff, #a0cfff);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -183,15 +182,15 @@ export default {
   font-size: 18px;
   font-weight: 600;
   margin-top: 16px;
-  background: linear-gradient(135deg, #ff5252, #ff6b6b, #ff9a9e);
+  background: linear-gradient(135deg, #409eff, #66b1ff, #a0cfff);
   border: none;
-  box-shadow: 0 4px 14px rgba(255, 82, 82, 0.2);
+  box-shadow: 0 4px 14px rgba(64, 158, 255, 0.2);
   transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 .register-box >>> .el-button:hover {
-  background: linear-gradient(135deg, #ff6b6b, #ff5252);
+  background: linear-gradient(135deg, #66b1ff, #409eff);
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(255, 82, 82, 0.3);
+  box-shadow: 0 6px 20px rgba(64, 158, 255, 0.3);
 }
 
 .tips {
