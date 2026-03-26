@@ -279,10 +279,24 @@ export default {
       const realMessages = this.messages.slice(1)
       // 限制最近10轮（20条消息），避免token爆炸
       const recent = realMessages.slice(-20)
-      return recent.map(msg => ({
-        role: msg.role === 'ai' ? 'assistant' : 'user',
-        content: msg.text
-      }))
+      return recent.map(msg => {
+        const role = msg.role === 'ai' ? 'assistant' : 'user'
+        let content = msg.text
+        // 如果AI推荐了菜品，在content中包含菜品信息，帮助AI记住推荐历史
+        if (msg.role === 'ai' && msg.food) {
+          content += ` (推荐了菜品：${msg.food.name})`
+        }
+        // 如果用户消息包含过敏、不喜欢等关键信息，明确标记
+        if (msg.role === 'user') {
+          const lowerText = msg.text.toLowerCase()
+          if (lowerText.includes('过敏') || lowerText.includes('不吃') || 
+              lowerText.includes('不喜欢') || lowerText.includes('不要') ||
+              lowerText.includes('不想吃') || lowerText.includes('换一个')) {
+            content += ` 【用户偏好/限制信息】`
+          }
+        }
+        return { role, content }
+      })
     },
     async sendMessage() {
       const text = this.inputText.trim()
