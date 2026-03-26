@@ -65,22 +65,24 @@ axios.interceptors.response.use(
   error => {
     if (error.response && error.response.status === 401) {
       const url = error.config.url || ''
+      const errorMsg = error.response.data?.msg || '登录已过期'
+      
       if (url.startsWith('/super')) {
-        // 超级管理端Token失效
         localStorage.removeItem('super_token')
         localStorage.removeItem('super_user')
+        Vue.prototype.$message.warning(errorMsg)
         router.push('/super/login')
       } else if (url.startsWith('/admin')) {
-        // 管理员端Token失效
         localStorage.removeItem('admin_token')
         localStorage.removeItem('admin_user')
+        Vue.prototype.$message.warning(errorMsg)
         router.push('/admin/login')
       } else {
-        // 用户端Token失效
         localStorage.removeItem('token')
         localStorage.removeItem('userId')
         localStorage.removeItem('username')
         store.commit('CLEAR_USER')
+        Vue.prototype.$message.warning(errorMsg)
         router.push('/login')
       }
     }
